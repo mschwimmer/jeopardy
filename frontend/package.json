@@ -7,7 +7,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "patch-package",
     "codegen": "graphql-codegen"
   },
   "dependencies": {

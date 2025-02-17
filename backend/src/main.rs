@@ -54,9 +54,12 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     // Create graphql schema
     let schema = create_schema(pool);
 
+    let allowed_origin =
+        env::var("ALLOWED_ORIGIN").unwrap_or_else(|_| "http://localhost:3000".to_string());
+
     // Configure CORS
     let cors = CorsLayer::new()
-        .allow_origin("http://localhost:3000".parse::<HeaderValue>()?)
+        .allow_origin(allowed_origin.parse::<HeaderValue>()?)
         .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
         .allow_headers([CONTENT_TYPE, AUTHORIZATION])
         .allow_credentials(true); // In case of cookies or other credentials
