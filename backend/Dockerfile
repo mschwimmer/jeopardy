@@ -1,5 +1,7 @@
+ARG TARGETPLATFORM=linux/amd64
+
 # Stage 1: Build the application
-FROM rust AS builder
+FROM --platform=$TARGETPLATFORM rust AS builder
 WORKDIR /app
 
 # Copy the Cargo manifest files and lockfile to cache dependencies
@@ -15,7 +17,7 @@ COPY . .
 RUN cargo build --release --bin backend
 
 # Stage 2: Create a minimal runtime container
-FROM debian:stable-slim
+FROM --platform=$TARGETPLATFORM debian:stable-slim
 # Install libpq, which provides libpq.so.5
 RUN apt-get update && apt-get install -y libpq5 && rm -rf /var/lib/apt/lists/*
 WORKDIR /app

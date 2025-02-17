@@ -10,11 +10,11 @@ name = "backend" # Name of the binary
 
 [dependencies]
 axum = "0.8.1"
-async-graphql = { version = "7.0.9", default-features = false, features = [
+async-graphql = { version = "7.0.15", default-features = false, features = [
     "chrono",
     "playground",
 ] }
-async-graphql-axum = "7.0.9"
+async-graphql-axum = "7.0.15"
 diesel = { version = "2.0", default-features = false, features = [
     "postgres",
     "chrono",
