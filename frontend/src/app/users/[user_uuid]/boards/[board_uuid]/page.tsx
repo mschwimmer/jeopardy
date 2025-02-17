@@ -7,7 +7,7 @@ import { fetchGameBoard } from "@/app/lib/serverQueries";
 export default async function BoardPage({
   params,
 }: {
-  params: { user_uuid: string; board_uuid: string };
+  params: Promise<{ user_uuid: string; board_uuid: string }>;
 }) {
   const { user_uuid, board_uuid } = await params;
   const gameBoardId = parseInt(board_uuid, 10);

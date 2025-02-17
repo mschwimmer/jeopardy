@@ -21,8 +21,7 @@ const Category: React.FC<CategoryProps> = ({
 }) => {
   const [newCategory, setNewCategory] = useState(category);
   const [isEditing, setIsEditing] = useState(false);
-  const [updateCategory, { loading, error, data }] =
-    useUpdateGameBoardCategoryMutation();
+  const [updateCategory] = useUpdateGameBoardCategoryMutation();
 
   // Update newCategory state when the category prop changes
   useEffect(() => {
@@ -38,8 +37,8 @@ const Category: React.FC<CategoryProps> = ({
       if (!newCategory.trim()) {
         alert("Category cannot be empty");
       } else {
-        console.log("Handle blur or enter, about to update category");
-        console.log(newCategory);
+        // console.log("Handle blur or enter, about to update category");
+        // console.log(newCategory);
         await updateCategory({
           variables: {
             gameBoardId,

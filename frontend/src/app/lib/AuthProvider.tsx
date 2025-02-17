@@ -11,7 +11,7 @@ import {
   signOut,
   GoogleAuthProvider,
   signInWithPopup,
-  UserCredential,
+  // UserCredential,
   User,
 } from "firebase/auth";
 

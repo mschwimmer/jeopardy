@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Button, TextField } from "@mui/material";
-import { useRouter } from "next/router";
+// TODO reroute to the new gameboard
+// import { useRouter } from "next/router";
 import { useCreateGameBoardMutation } from "@/__generated__/graphql";
 
 interface NewGameBoardProps {

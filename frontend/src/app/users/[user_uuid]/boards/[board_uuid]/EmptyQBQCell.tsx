@@ -46,12 +46,8 @@ const EmptyGBQCell: React.FC<EmptyQBQCellProps> = ({
   const [editedAnswer, setEditedAnswer] = useState<string>("");
   const [dailyDouble, setDailyDouble] = useState<boolean>(false);
   const [points, setPoints] = useState<number>((row + 1) * 100);
-  const [createQuestion, { loading, error, data }] =
-    useCreateQuestionMutation();
-  const [
-    createGameBoardMapping,
-    { loading: mapLoading, error: mapError, data: mapData },
-  ] = useCreateMappingMutation();
+  const [createQuestion] = useCreateQuestionMutation();
+  const [createGameBoardMapping] = useCreateMappingMutation();
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);

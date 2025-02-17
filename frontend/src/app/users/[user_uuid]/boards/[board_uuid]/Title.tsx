@@ -14,16 +14,15 @@ interface TitleProps {
 const Title: React.FC<TitleProps> = ({ title, gameBoardId }) => {
   const [newTitle, setNewTitle] = useState(title);
   const [isEditing, setIsEditing] = useState(false);
-  const [updateTitle, { loading, error, data }] =
-    useUpdateGameBoardTitleMutation({
-      variables: { boardId: gameBoardId, title: newTitle },
-      refetchQueries: [
-        {
-          query: FindGameBoardDocument,
-          variables: { gameBoardId },
-        },
-      ],
-    });
+  const [updateTitle] = useUpdateGameBoardTitleMutation({
+    variables: { boardId: gameBoardId, title: newTitle },
+    refetchQueries: [
+      {
+        query: FindGameBoardDocument,
+        variables: { gameBoardId },
+      },
+    ],
+  });
 
   const handleTextClick = () => {
     setIsEditing(true);

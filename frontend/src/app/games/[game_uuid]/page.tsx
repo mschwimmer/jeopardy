@@ -5,10 +5,11 @@ import Scoreboard from "./Scoreboard";
 import { GameContextProvider } from "./GameContext";
 import { fetchGame, fetchGameBoard } from "@/app/lib/serverQueries";
 import { Game, GameBoard } from "@/__generated__/types";
+
 export default async function GamePage({
   params,
 }: {
-  params: { game_uuid: string };
+  params: Promise<{ game_uuid: string }>;
 }) {
   const { game_uuid } = await params;
   const gameId = parseInt(game_uuid, 10);
@@ -21,7 +22,7 @@ export default async function GamePage({
       <div className={styles.page}>
         <main className={styles.main}>
           <GameContextProvider game_uuid={game_uuid}>
-            <Scoreboard  />
+            <Scoreboard />
             <GameBoardGrid gameBoard={gameBoard} />
           </GameContextProvider>
         </main>

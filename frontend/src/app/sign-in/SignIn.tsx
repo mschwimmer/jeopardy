@@ -74,7 +74,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState("");
   const [open, setOpen] = React.useState(false);
-  const { signIn, signInWithGoogle, user, loading } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const router = useRouter();
 
   const handleClickOpen = () => {
@@ -96,7 +96,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     try {
       // Call the signIn function from the AuthProvider
       const result = await signIn(email, password);
-      console.log("User signed in:", result.user);
+      // console.log("User signed in:", result.user);
       const userResult = await findUserByFirebaseUid(result.user.uid);
       // Optionally, redirect or update UI based on successful sign in
       router.push("/user/" + userResult.data?.findUserByFirebaseUid?.id);
@@ -111,7 +111,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     try {
       // Call the signInWithGoogle function from the AuthProvider
       const result = await signInWithGoogle();
-      console.log("User signed in with Google:", result.user);
+      // console.log("User signed in with Google:", result.user);
       if (!result.user) {
         console.error("Google user not found:", result);
         return;

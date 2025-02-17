@@ -28,10 +28,10 @@ const GameGBQModal: React.FC<GameGBQModalProps> = ({
       onClose={onClose}
       maxWidth="lg"
       fullWidth
-      sx={(theme) => ({
+      sx={{
         minHeight: "50vh",
         maxHeight: "80vh",
-      })}
+      }}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();

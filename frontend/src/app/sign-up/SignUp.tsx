@@ -2,10 +2,8 @@
 import * as React from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import Checkbox from "@mui/material/Checkbox";
 import CssBaseline from "@mui/material/CssBaseline";
 import Divider from "@mui/material/Divider";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import FormLabel from "@mui/material/FormLabel";
 import FormControl from "@mui/material/FormControl";
 import Link from "@mui/material/Link";
@@ -124,15 +122,15 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
     const username = data.get("username") as string;
 
     try {
-      console.log("Attempting to sign up with email:", email);
+      // console.log("Attempting to sign up with email:", email);
       const userCredential = await signUp(email, password);
-      console.log("Firebase sign up successful:", userCredential);
+      // console.log("Firebase sign up successful:", userCredential);
       const firebaseUser = userCredential.user;
-      const idToken = await firebaseUser.getIdToken();
+      // const idToken = await firebaseUser.getIdToken();
 
       // Send the user data to the server
       const response = await createUser(username, firebaseUser.uid);
-      console.log("Backend createUser response:", response);
+      // console.log("Backend createUser response:", response);
       router.push("/users/" + response.data?.createUser.id);
     } catch (error) {
       console.error("Error during Firebase sign up:", error);
@@ -147,18 +145,18 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
         console.error("Google user not found:", result);
         return;
       }
-      console.log("User signed up with Google:", result.user);
+      // console.log("User signed up with Google:", result.user);
 
       // First check for existing user with firebase UID
       const existingUser = await findUserByFirebaseUid(result.user.uid);
-      console.log(existingUser);
+      // console.log(existingUser);
       if (existingUser) {
-        console.log("User already exists with firebase UID", result.user.uid);
+        // console.log("User already exists with firebase UID", result.user.uid);
         router.push("/users/" + existingUser.id);
       } else {
-        console.log("No user found with firebase UID", result.user.uid);
+        // console.log("No user found with firebase UID", result.user.uid);
         const displayName = result.user.displayName ?? "Display Name";
-        console.log("Creating new user from google user: ", displayName);
+        // console.log("Creating new user from google user: ", displayName);
         const userResult = await createUser(displayName, result.user.uid);
         router.push("/users/" + userResult.data?.createUser.id);
       }

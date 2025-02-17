@@ -2,7 +2,7 @@
 
 // src/app/lib/AuthContext
 // TODO - Create an AuthContext to manage user authentication
-import React, { createContext } from "react";
+import { createContext } from "react";
 import { UserCredential, User } from "firebase/auth";
 
 interface AuthContextType {

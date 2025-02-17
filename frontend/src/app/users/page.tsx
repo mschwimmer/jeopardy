@@ -11,10 +11,10 @@ export default function UsersPage() {
         <ol>
           <h1>Users Page</h1>
           <p>
-            Not really sure what should be here. Honestly, this shouldn't even
-            be an accesible route.
+            Not really sure what should be here. Honestly, this shouldn&apos;t
+            even be an accesible route.
           </p>
-          <p>Maybe I'll put a good recipe for any lost souls</p>
+          <p>Maybe I&apos;ll put a good recipe for any lost souls</p>
           <List>
             <h2>Ingredients:</h2>
             <ListItem>

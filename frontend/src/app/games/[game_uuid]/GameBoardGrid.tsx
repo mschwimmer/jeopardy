@@ -16,8 +16,7 @@ interface GameBoardGridProps {
 }
 
 const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard }) => {
-  const { game_uuid, currentGameBoardQuestion, setCurrentGameBoardQuestion } =
-    useGameContext();
+  const { setCurrentGameBoardQuestion } = useGameContext();
   const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(
     new Set()
   );

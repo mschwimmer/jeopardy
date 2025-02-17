@@ -8,19 +8,14 @@ import {
 } from "@/__generated__/graphql";
 import QueryResult from "@/app/components/query-result";
 import PlayerCard from "./PlayerCard";
-import { Box, Fab, Typography, Tooltip } from "@mui/material";
+import { Fab, Tooltip } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import AddIcon from "@mui/icons-material/Add";
 import { Remove } from "@mui/icons-material";
 import { useGameContext } from "./GameContext";
 
-interface ScoreboardProps {
-  // game_uuid: string;
-}
-
-const Scoreboard: React.FC<ScoreboardProps> = () => {
-  const { game_uuid, currentGameBoardQuestion, setCurrentGameBoardQuestion } =
-    useGameContext();
+const Scoreboard: React.FC = () => {
+  const { game_uuid } = useGameContext();
   const gameId = parseInt(game_uuid, 10);
   const {
     data,
@@ -99,6 +94,11 @@ const Scoreboard: React.FC<ScoreboardProps> = () => {
         {addError && (
           <p style={{ color: "red" }}>
             Error adding player: {addError.message}
+          </p>
+        )}
+        {deleteError && (
+          <p style={{ color: "red" }}>
+            Error deleting player: {deleteError.message}
           </p>
         )}
       </Grid>

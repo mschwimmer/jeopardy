@@ -46,12 +46,8 @@ const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
   const [editedAnswer, setEditedAnswer] = useState<string>("");
   const [dailyDouble, setDailyDouble] = useState<boolean>(false);
   const [points, setPoints] = useState<number>(100);
-  const [updateQuestion, { loading, error, data }] =
-    useUpdateQuestionMutation();
-  const [
-    updateMapping,
-    { loading: mapLoading, error: mapError, data: mapData },
-  ] = useUpdateMappingMutation();
+  const [updateQuestion] = useUpdateQuestionMutation();
+  const [updateMapping] = useUpdateMappingMutation();
 
   // Update state when the GBQ prop changes
   useEffect(() => {

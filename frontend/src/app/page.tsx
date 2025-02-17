@@ -1,4 +1,3 @@
-import Image from "next/image";
 import styles from "./page.module.css";
 import { Typography } from "@mui/material";
 import Link from "next/link";
@@ -13,7 +12,8 @@ export default function HomePage() {
         </Typography>
       </main>
       <footer className={styles.footer}>
-        The best Jeopardy app you've ever laid your eggs in - John F. Kennedy
+        The best Jeopardy app you&apos;ve ever laid your eggs in - John F.
+        Kennedy
       </footer>
     </div>
   );

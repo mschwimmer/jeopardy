@@ -4,7 +4,7 @@ import UserGameBoardDashboard from "../UserGameBoardDashboard";
 export default async function BoardsPage({
   params,
 }: {
-  params: { user_uuid: string };
+  params: Promise<{ user_uuid: string }>;
 }) {
   const { user_uuid } = await params;
   return (

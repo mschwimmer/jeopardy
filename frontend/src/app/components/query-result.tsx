@@ -13,7 +13,7 @@ const QueryResult: React.FC<PropsWithChildren<QueryResultProps>> = ({
   error,
   data,
   children,
-}): React.ReactElement<any, any> | null => {
+}) => {
   if (error) {
     return <p>Error fetching data: {error.message}</p>;
   }

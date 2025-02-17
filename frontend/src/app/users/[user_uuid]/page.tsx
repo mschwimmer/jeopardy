@@ -10,7 +10,7 @@ import UserCard from "./UserCard";
 export default async function UserPage({
   params,
 }: {
-  params: { user_uuid: string };
+  params: Promise<{ user_uuid: string }>;
 }) {
   const { user_uuid } = await params;
   // console.log("user_uuid in UserPage:", user_uuid);
