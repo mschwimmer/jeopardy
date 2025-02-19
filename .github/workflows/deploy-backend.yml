@@ -54,6 +54,17 @@ jobs:
           service: "${{ env.SERVICE }}"
           region: "${{ env.REGION }}"
           image: "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-rust-repo/${{ env.SERVICE }}:${{ github.sha }}"
+          env_vars: |-
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            ALLOWED_ORIGIN=${{ secrets.ALLOWED_ORIGIN }}
+            RUST_LOG=info
+
+      - name: "Allow unauthenticated invocations"
+        run: |
+          gcloud run services add-iam-policy-binding ${{ env.SERVICE }} \
+            --region ${{ env.REGION }} \
+            --member="allUsers" \
+            --role="roles/run.invoker"
 
       - name: "Show Cloud Run URL"
         run: echo "Cloud Run deployed at ${{ steps.deploy.outputs.url }}"
