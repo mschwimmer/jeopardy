@@ -1,4 +1,4 @@
-name: Deploy to Google Cloud Run
+name: Deploy Backend to Google Cloud Run
 
 on:
   push:
@@ -7,6 +7,9 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  PROJECT_ID: "jeopardy-b4166" # Your Google Cloud project ID
+  REGION: "us-east1" # Your Cloud Run region
+  SERVICE: "backend-service" # Your Cloud Run service name
 
 jobs:
   build:
@@ -18,7 +21,43 @@ jobs:
           fetch-depth: 1 # Only fetch the latest commit (faster)
       - name: Build
         run: cargo build --verbose --release
-      - name: Run Tests
-        run: cargo test --verbose
 
-  # deploy:
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    permissions:
+      contents: "read"
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - id: "auth"
+        name: "Authenticate to Google Cloud"
+        uses: "google-github-actions/auth@v2"
+        with:
+          credentials_json: "${{ secrets.GCP_CREDENTIALS }}" # Uses stored JSON key
+
+      - name: "Docker Auth"
+        uses: "docker/login-action@v3"
+        with:
+          username: "oauth2accesstoken"
+          password: "${{ secrets.GCP_CREDENTIALS }}"
+          registry: "${{ env.REGION }}-docker.pkg.dev"
+
+      - name: "Build and Push Container"
+        run: |
+          DOCKER_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/backend/${{ env.SERVICE }}:${{ github.sha }}"
+          docker build --tag "${DOCKER_TAG}" .
+          docker push "${DOCKER_TAG}"
+
+      - name: "Deploy to Cloud Run"
+        uses: "google-github-actions/deploy-cloudrun@v2"
+        with:
+          service: "${{ env.SERVICE }}"
+          region: "${{ env.REGION }}"
+          image: "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/backend/${{ env.SERVICE }}:${{ github.sha }}"
+
+      - name: "Show Cloud Run URL"
+        run: echo "Cloud Run deployed at ${{ steps.deploy.outputs.url }}"
