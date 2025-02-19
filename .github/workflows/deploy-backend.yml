@@ -39,12 +39,8 @@ jobs:
         with:
           credentials_json: "${{ secrets.GCP_CREDENTIALS }}" # Uses stored JSON key
 
-      - name: "Docker Auth"
-        uses: "docker/login-action@v3"
-        with:
-          username: "oauth2accesstoken"
-          password: "${{ secrets.GCP_CREDENTIALS }}"
-          registry: "${{ env.REGION }}-docker.pkg.dev"
+      - name: "Authenticate Docker with Google Cloud"
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
 
       - name: "Build and Push Container"
         run: |
