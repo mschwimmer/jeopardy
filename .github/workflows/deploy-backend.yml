@@ -9,7 +9,7 @@ env:
   CARGO_TERM_COLOR: always
   PROJECT_ID: "jeopardy-b4166" # Your Google Cloud project ID
   REGION: "us-east1" # Your Cloud Run region
-  SERVICE: "backend-service" # Your Cloud Run service name
+  SERVICE: "backend-image" # Your Cloud Run service name
 
 jobs:
   build:
@@ -44,7 +44,7 @@ jobs:
 
       - name: "Build and Push Container"
         run: |
-          DOCKER_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/backend/${{ env.SERVICE }}:${{ github.sha }}"
+          DOCKER_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-rust-repo/${{ env.SERVICE }}:${{ github.sha }}"
           docker build --tag "${DOCKER_TAG}" -f backend/Dockerfile .
           docker push "${DOCKER_TAG}"
 
@@ -53,7 +53,7 @@ jobs:
         with:
           service: "${{ env.SERVICE }}"
           region: "${{ env.REGION }}"
-          image: "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/backend/${{ env.SERVICE }}:${{ github.sha }}"
+          image: "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-rust-repo/${{ env.SERVICE }}:${{ github.sha }}"
 
       - name: "Show Cloud Run URL"
         run: echo "Cloud Run deployed at ${{ steps.deploy.outputs.url }}"
