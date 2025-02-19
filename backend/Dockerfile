@@ -4,13 +4,15 @@ ARG TARGETPLATFORM=linux/amd64
 FROM --platform=$TARGETPLATFORM rust AS builder
 WORKDIR /app
 
-# Copy the Cargo manifest files and lockfile to cache dependencies
+# Copy the workspace manifest and lockfile
 COPY Cargo.toml Cargo.lock ./
+# Also copy the backend manifest file
+COPY backend/Cargo.toml backend/
 
 # Create a dummy main file so that dependencies can be compiled
-RUN mkdir src && echo "fn main() {}" > src/main.rs
-RUN cargo build --release
-RUN rm -f src/main.rs
+RUN mkdir -p backend/src && echo "fn main() {}" > backend/src/main.rs
+RUN cargo build --release --bin backend
+RUN rm -f backend/src/main.rs
 
 # Copy the full source code and rebuild the binary
 COPY . .

@@ -1,8 +1,13 @@
-# Node dockerignore
+# Node & frontend-related ignores
+frontend/
 **/node_modules/
 **/dist
+
+# Git and logs
 .git
 npm-debug.log
+
+# Coverage & environment files
 .coverage
 .coverage.*
 .env
@@ -10,7 +15,5 @@ npm-debug.log
 
 # Rust dockerignore
 target
-Dockerfile
 .dockerignore
-.git
 .gitignore
