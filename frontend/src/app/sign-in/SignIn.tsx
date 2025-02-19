@@ -17,7 +17,6 @@ import MuiCard from "@mui/material/Card";
 import { styled } from "@mui/material/styles";
 import ForgotPassword from "./components/ForgotPassword";
 import AppTheme from "../shared-theme/AppTheme";
-import ColorModeSelect from "../shared-theme/ColorModeSelect";
 import { GoogleIcon, DogIcon } from "./components/CustomIcons";
 import type {} from "@mui/material/themeCssVarsAugmentation";
 
@@ -156,9 +155,6 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
       <SignInContainer direction="column" justifyContent="space-between">
-        <ColorModeSelect
-          sx={{ position: "fixed", top: "1rem", right: "1rem" }}
-        />
         <Card variant="outlined">
           <DogIcon />
           <Typography

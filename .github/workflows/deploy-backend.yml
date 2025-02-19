@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - release/production
+    paths:
+      - "backend/**"
 
 env:
   CARGO_TERM_COLOR: always
