@@ -35,8 +35,8 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - id: "auth"
-        name: "Authenticate to Google Cloud"
+      - name: "Authenticate to Google Cloud"
+        id: "auth"
         uses: "google-github-actions/auth@v2"
         with:
           credentials_json: "${{ secrets.GCP_CREDENTIALS }}" # Uses stored JSON key
@@ -51,6 +51,7 @@ jobs:
           docker push "${DOCKER_TAG}"
 
       - name: "Deploy to Cloud Run"
+        id: "deploy"
         uses: "google-github-actions/deploy-cloudrun@v2"
         with:
           service: "${{ env.SERVICE }}"

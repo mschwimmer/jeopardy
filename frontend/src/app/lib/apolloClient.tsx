@@ -6,7 +6,7 @@ import { fireBaseAuth } from "@/utils/firebase";
 
 const httpLink = createHttpLink({
   uri:
-    process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || "http://localhost:8000/graphql",
+    process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || "http://localhost:8080/graphql",
 });
 
 const authLink = setContext(async (_, { headers }) => {

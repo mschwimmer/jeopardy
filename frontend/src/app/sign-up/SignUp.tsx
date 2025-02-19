@@ -169,12 +169,12 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
       const displayName = result.user.displayName ?? "Display Name";
       console.log("[SignUpWithGoogle] Using display name:", displayName);
       const userResult = await createUser(displayName, result.user.uid);
-      if (userResult.data?.createUser.id) {
+      if (userResult.id) {
         console.log(
           "[SignUpWithGoogle] User successfully created with id:",
-          userResult.data.createUser.id
+          userResult.id
         );
-        router.push("/users/" + userResult.data.createUser.id);
+        router.push("/users/" + userResult.id);
       } else {
         console.error(
           "[SignUpWithGoogle] User creation did not return a valid id:",
