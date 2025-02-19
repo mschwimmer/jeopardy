@@ -1,0 +1,24 @@
+name: Deploy to Google Cloud Run
+
+on:
+  push:
+    branches:
+      - release/production
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1 # Only fetch the latest commit (faster)
+      - name: Build
+        run: cargo build --verbose --release
+      - name: Run Tests
+        run: cargo test --verbose
+
+  # deploy:

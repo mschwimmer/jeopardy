@@ -1,5 +1,5 @@
 # Ignore workflow file until secrets are added
-.github/workflows/*
+# .github/workflows/*
 
 project-structure.md
 

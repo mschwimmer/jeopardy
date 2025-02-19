@@ -16,6 +16,7 @@ import AppTheme from "../shared-theme/AppTheme";
 import ColorModeSelect from "../shared-theme/ColorModeSelect";
 import { GoogleIcon, DogIcon } from "./components/CustomIcons";
 
+import { ApolloError } from "@apollo/client";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../lib/AuthProvider";
 import { createUser, findUserByFirebaseUid } from "../lib/serverQueries";
@@ -142,26 +143,58 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
     try {
       const result = await signInWithGoogle();
       if (!result.user) {
-        console.error("Google user not found:", result);
+        console.error("[SignUpWithGoogle] No Google user returned:", result);
         return;
       }
-      // console.log("User signed up with Google:", result.user);
+      console.log("User signed up with Google:", result.user);
+
+      console.log(
+        `[SignUpWithGoogle] Checking for existing user with UID: ${result.user.uid}`
+      );
 
       // First check for existing user with firebase UID
       const existingUser = await findUserByFirebaseUid(result.user.uid);
-      // console.log(existingUser);
       if (existingUser) {
-        // console.log("User already exists with firebase UID", result.user.uid);
+        console.log(
+          `User already exists with UID ${result.user.uid}`,
+          existingUser
+        );
         router.push("/users/" + existingUser.id);
+      }
+
+      console.log(
+        `[SignUpWithGoogle] No existing user found. Creating new user for UID: ${result.user.uid}`
+      );
+
+      // If no existing user, create a new user
+      const displayName = result.user.displayName ?? "Display Name";
+      console.log("[SignUpWithGoogle] Using display name:", displayName);
+      const userResult = await createUser(displayName, result.user.uid);
+      if (userResult.data?.createUser.id) {
+        console.log(
+          "[SignUpWithGoogle] User successfully created with id:",
+          userResult.data.createUser.id
+        );
+        router.push("/users/" + userResult.data.createUser.id);
       } else {
-        // console.log("No user found with firebase UID", result.user.uid);
-        const displayName = result.user.displayName ?? "Display Name";
-        // console.log("Creating new user from google user: ", displayName);
-        const userResult = await createUser(displayName, result.user.uid);
-        router.push("/users/" + userResult.data?.createUser.id);
+        console.error(
+          "[SignUpWithGoogle] User creation did not return a valid id:",
+          userResult
+        );
       }
     } catch (error) {
-      console.error("Error signing up with Google:", error);
+      console.error(
+        "[SignUpWithGoogle] Error during sign-up with Google:",
+        error
+      );
+      // If the error is an ApolloError, log more detailed info:
+      if (error instanceof ApolloError) {
+        console.error(
+          "[SignUpWithGoogle] GraphQL errors:",
+          error.graphQLErrors
+        );
+        console.error("[SignUpWithGoogle] Network error:", error.networkError);
+      }
     }
   };
 
