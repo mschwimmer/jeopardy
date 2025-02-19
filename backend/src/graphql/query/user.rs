@@ -10,7 +10,7 @@ pub struct UserQuery;
 #[Object]
 impl UserQuery {
     /// Find user by id
-    async fn find_user(&self, ctx: &Context<'_>, user_id: i64) -> Result<User> {
+    async fn find_user(&self, ctx: &Context<'_>, user_id: i64) -> Result<Option<User>> {
         let pool = ctx.data::<DBPool>().map_err(|e| {
             async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
         })?;
@@ -19,8 +19,9 @@ impl UserQuery {
             .await
             .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
 
-        let user: User = User::find_by_id(&mut conn, user_id).await?;
-        Ok(user)
+        User::find_by_id(&mut conn, user_id)
+            .await
+            .map_err(|e| e.into())
     }
 
     /// Find user by firebase UID
@@ -28,7 +29,7 @@ impl UserQuery {
         &self,
         ctx: &Context<'_>,
         firebase_uid: String,
-    ) -> Result<User> {
+    ) -> Result<Option<User>> {
         let pool = ctx.data::<DBPool>().map_err(|e| {
             async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
         })?;
@@ -37,8 +38,9 @@ impl UserQuery {
             .await
             .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
 
-        let user: User = User::find_by_firebase_uid(&mut conn, firebase_uid).await?;
-        Ok(user)
+        User::find_by_firebase_uid(&mut conn, firebase_uid)
+            .await
+            .map_err(|e| e.into())
     }
 
     /// Fetch all users in database

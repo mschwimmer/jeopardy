@@ -5,7 +5,7 @@ use backend::models::game_board_question_mapping::{
     GameBoardQuestionMapping, NewGameBoardQuestionMapping, NewGameBoardQuestionMappingBuilder,
 };
 use backend::models::question::{NewQuestion, NewQuestionBuilder, Question};
-use backend::models::user::{NewUser, NewUserBuilder, User};
+use backend::models::user::User;
 use diesel_async::AsyncPgConnection;
 
 /// Creates a new test user with default values.
@@ -26,20 +26,18 @@ use diesel_async::AsyncPgConnection;
 /// let user = create_test_user(conn, None).await;
 /// let custom_user = create_test_user(conn, Some(NewUser { username: "custom".to_string(), ..Default::default() })).await;
 /// ```
-pub async fn create_test_user(conn: &mut AsyncPgConnection, overrides: Option<NewUser>) -> User {
-    let mut builder: NewUserBuilder = NewUserBuilder::default();
-
-    if let Some(overrides) = overrides {
-        builder.username(overrides.username);
-    } else {
-        builder.username("defaultuser".to_string());
-    }
-
-    let new_user: NewUser = builder.build().expect("Failed to build new user");
-
-    User::create(conn, new_user)
-        .await
-        .expect("Failed to create test user")
+pub async fn create_test_user(
+    conn: &mut AsyncPgConnection,
+    username: Option<String>,
+    firebase_uid: Option<String>,
+) -> User {
+    User::create(
+        conn,
+        username.unwrap_or("defaultuser".to_string()),
+        firebase_uid.unwrap_or("defaultuid".to_string()),
+    )
+    .await
+    .expect("Failed to create test user")
 }
 
 /// Creates a new test game board with default values

@@ -17,7 +17,7 @@ use diesel_async::{AsyncPgConnection, RunQueryDsl};
 /// along with additional metadata such as the position of the question
 /// on the grid, points, and whether it's a daily double.
 /// # Example
-/// ```rust
+/// ```rust, ignore
 /// let mapping = GBQMapping {
 ///     board_id: 1,
 ///     question_id: 42,

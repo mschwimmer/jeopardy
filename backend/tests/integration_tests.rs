@@ -7,7 +7,7 @@ use backend::graphql::schema::create_schema;
 use backend::models::game_board::{GameBoard, NewGameBoard};
 use backend::models::game_board_question_mapping::GameBoardQuestionMapping;
 use backend::models::question::Question;
-use backend::models::user::{NewUser, User};
+use backend::models::user::User;
 use common::factories::{
     create_test_game_board, create_test_game_board_question_mapping, create_test_question,
     create_test_user,
@@ -73,14 +73,13 @@ async fn test_create_user_model() {
 
     // Insert a test user into the database
     {
-        let new_user: NewUser = NewUser {
-            username: "testuser".to_string(),
-        };
-
         let mut conn = test_db.pool.get().await.unwrap();
 
         // Perform user creation inside the transaction
-        let created_user: User = User::create(&mut conn, new_user).await.unwrap();
+        let created_user: User =
+            User::create(&mut conn, "testuser".to_string(), "testuid".to_string())
+                .await
+                .unwrap();
         println!(
             "Created user: {}, id: {}",
             created_user.username, created_user.id
@@ -106,7 +105,7 @@ async fn test_create_user_graphql() {
     // Define the GraphQL mutation string
     let mutation = r#"
         mutation {
-            createUser(input: { username: "testuser" }) {
+            createUser(input: { username: "testuser", firebaseUid: "testuid" }) {
                 id
                 username
                 createdAt
@@ -147,12 +146,11 @@ async fn test_create_user_graphql() {
 async fn test_get_user_graphql() {
     // Set up test database and schema
     let mut test_db: TestDB = TestDB::new().await.expect("Failed to initialize test_db");
-    // Insert testUser
-    let user1 = NewUser {
-        username: "testUser".to_string(),
-    };
     let mut conn = test_db.pool.get().await.unwrap();
-    let created_user: User = User::create(&mut conn, user1).await.unwrap();
+
+    let created_user: User = User::create(&mut conn, "testUser".to_string(), "testuid".to_string())
+        .await
+        .unwrap();
 
     // Only testing UserQuery, so no need for mutation or subscription
     let schema = create_schema(test_db.pool.clone());
@@ -207,16 +205,8 @@ async fn test_all_users_graphql() {
     // Grab connection from pool, start a transaction from connection
     let mut conn = test_db.pool.get().await.unwrap();
 
-    // Insert test users
-    let user1 = NewUser {
-        username: "user1".to_string(),
-    };
-    let user2 = NewUser {
-        username: "user2".to_string(),
-    };
-
-    let _ = User::create(&mut conn, user1).await;
-    let _ = User::create(&mut conn, user2).await;
+    let _ = User::create(&mut conn, "user1".to_string(), "1234".to_string()).await;
+    let _ = User::create(&mut conn, "user2".to_string(), "1235".to_string()).await;
 
     // Build the GraphQL schema with Query and Mutation types
     let schema = create_schema(test_db.pool.clone());
@@ -279,16 +269,13 @@ async fn test_create_game_board_model() {
     // Set up test database and schema
     let mut test_db: TestDB = TestDB::new().await.expect("Failed to initialize test_db");
 
-    // Insert a test user into the database
-    let new_user: NewUser = NewUser {
-        username: "testuser".to_string(),
-    };
-
     let mut conn = test_db.pool.get().await.unwrap();
     println!("Created async connection object from pool");
 
     // Perform user creation inside the transaction
-    let created_user: User = User::create(&mut conn, new_user).await.unwrap();
+    let created_user: User = User::create(&mut conn, "testuser".to_string(), "123".to_string())
+        .await
+        .unwrap();
     println!(
         "Created user: {}, id: {}",
         created_user.username, created_user.id
@@ -332,13 +319,11 @@ async fn test_create_game_board_model() {
 async fn test_get_game_board_graphql() {
     // Set up test database and schema
     let mut test_db: TestDB = TestDB::new().await.expect("Failed to initialize test_db");
-
-    // Insert testUser
-    let user1 = NewUser {
-        username: "testUser".to_string(),
-    };
     let mut conn = test_db.pool.get().await.unwrap();
-    let new_user: User = User::create(&mut conn, user1).await.unwrap();
+
+    let new_user: User = User::create(&mut conn, "testUser".to_string(), "123".to_string())
+        .await
+        .unwrap();
 
     // Insert testGameBoard from testUser
     let game_board1 = NewGameBoard {
@@ -399,7 +384,7 @@ async fn test_factory_functions() {
     let mut conn = test_db.pool.get().await.unwrap();
 
     // Create test user using factory
-    let factory_user: User = create_test_user(&mut conn, None).await;
+    let factory_user: User = create_test_user(&mut conn, None, None).await;
     assert_eq!(factory_user.username, "defaultuser");
 
     // Create test game board using factory
@@ -561,13 +546,7 @@ async fn test_create_game_board_graphql() {
 
     // Insert test user using factory
     let mut conn = test_db.pool.get().await.unwrap();
-    let user = create_test_user(
-        &mut conn,
-        Some(NewUser {
-            username: "graphql_user".to_string(),
-        }),
-    )
-    .await;
+    let user = create_test_user(&mut conn, Some("graphql_user".to_string()), None).await;
     assert_eq!(user.username, "graphql_user");
 
     // Build graphql schema with Query and Mutation types
