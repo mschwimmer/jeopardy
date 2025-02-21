@@ -1,6 +1,6 @@
 // src/app/lib/theme.ts
 
-import { createTheme } from "@mui/material/styles";
+import { createTheme, lighten, darken } from "@mui/material/styles";
 
 const theme = createTheme({
   typography: {
@@ -14,17 +14,34 @@ const theme = createTheme({
 
 export default theme;
 
+const basePrimaryColor = "#2d545e";
+const baseSecondaryColor = "#c89666";
+const baseBackgroundColor = "#e1b382";
+const baseInfoColor = "#12343b";
+
 export const theme1 = createTheme({
   palette: {
-    primary: { main: "#3C7D9B" },
-    secondary: { main: "#F0C0A4" },
+    primary: {
+      main: basePrimaryColor,
+      light: lighten(basePrimaryColor, 0.2),
+      dark: darken(basePrimaryColor, 0.2),
+    },
+    secondary: {
+      main: baseSecondaryColor,
+      light: lighten(baseSecondaryColor, 0.2),
+      dark: darken(baseSecondaryColor, 0.2),
+    },
     background: {
-      default: "#C3AFA2",
-      paper: "#C3AFA2",
+      default: baseBackgroundColor,
+      paper: lighten(baseBackgroundColor, 0.2),
     },
     success: { main: "#698e9d" },
     error: { main: "#EE9CAD" },
-    info: { main: "#CBD69D" },
+    info: {
+      main: baseInfoColor,
+      light: lighten(baseInfoColor, 0.2),
+      dark: darken(baseInfoColor, 0.2),
+    },
     warning: { main: "#F6AB49" },
   },
 });

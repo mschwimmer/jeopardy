@@ -148,21 +148,21 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
       console.log("User signed up with Google:", result.user);
 
       console.log(
-        `[SignUpWithGoogle] Checking for existing user with UID: ${result.user.uid}`
+        `[SignUpWithGoogle] Checking for existing gUser in db with UID: ${result.user.uid}`
       );
 
       // First check for existing user with firebase UID
       const existingUser = await findUserByFirebaseUid(result.user.uid);
       if (existingUser) {
         console.log(
-          `User already exists with UID ${result.user.uid}`,
+          `gUser already exists in db with UID ${result.user.uid}`,
           existingUser
         );
-        router.push("/users/" + existingUser.id);
+        router.push(`/users/${existingUser.id}`);
       }
 
       console.log(
-        `[SignUpWithGoogle] No existing user found. Creating new user for UID: ${result.user.uid}`
+        `[SignUpWithGoogle] No existing gUser found in db. Creating new user for UID: ${result.user.uid}`
       );
 
       // If no existing user, create a new user
@@ -174,7 +174,7 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
           "[SignUpWithGoogle] User successfully created with id:",
           userResult.id
         );
-        router.push("/users/" + userResult.id);
+        router.push(`/users/${userResult.id}`);
       } else {
         console.error(
           "[SignUpWithGoogle] User creation did not return a valid id:",

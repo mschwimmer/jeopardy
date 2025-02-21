@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "NEXT_PUBLIC_GRAPHQL_ENDPOINT=http://0.0.0.0:8080/graphql next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

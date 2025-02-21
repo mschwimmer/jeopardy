@@ -10,3 +10,14 @@ services:
       POSTGRES_USER: jeopardy
       POSTGRES_PASSWORD: password
       POSTGRES_DB: jeopardy
+  backend:
+    build:
+      context: ../
+      dockerfile: backend/Dockerfile.dev
+    environment:
+      DATABASE_URL: postgres://jeopardy:password@db:5432/jeopardy
+      RUST_LOG: info
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
