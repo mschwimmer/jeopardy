@@ -5,9 +5,11 @@ import Link from "next/link";
 export default function HomePage() {
   return (
     <div className={styles.page}>
+      <header>
+        <Typography variant="h1">The Trivia Game</Typography>
+      </header>
       <main className={styles.main}>
-        <Typography variant="h1">Jeopardy App</Typography>
-        <Typography variant="h2">
+        <Typography variant="h1">
           <Link href={`/sign-in`}>Sign-In</Link>
         </Typography>
       </main>

@@ -18,11 +18,11 @@ const StyledLink = styled(Link)({
 
 const NavBar = () => {
   return (
-    <Box sx={{ flexGrow: 1, mb: 4 }}>
+    <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            <StyledLink href="/">Jeopardy App</StyledLink>
+            <StyledLink href="/">The Trivia Game</StyledLink>
           </Typography>
           <Button color="inherit">
             <StyledLink href="/admin">Admin</StyledLink>

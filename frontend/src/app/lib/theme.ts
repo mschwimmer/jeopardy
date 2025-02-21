@@ -14,15 +14,15 @@ const theme = createTheme({
 
 export default theme;
 
-export const testTheme = createTheme({
+export const theme1 = createTheme({
   palette: {
-    primary: { main: "#59CAB3" },
-    secondary: { main: "#EC8B62" },
+    primary: { main: "#3C7D9B" },
+    secondary: { main: "#F0C0A4" },
     background: {
-      default: "#F3EDDD",
-      paper: "#F3EDDD",
+      default: "#C3AFA2",
+      paper: "#C3AFA2",
     },
-    success: { main: "#DCF8C6" },
+    success: { main: "#698e9d" },
     error: { main: "#EE9CAD" },
     info: { main: "#CBD69D" },
     warning: { main: "#F6AB49" },
