@@ -121,13 +121,11 @@ const EmptyGBQCell: React.FC<EmptyQBQCellProps> = ({
         justifyContent: "center",
         textAlign: "center",
         border: `1px solid ${theme.palette.divider}`,
-        backgroundColor: isOver
-          ? theme.palette.action.hover
-          : theme.palette.secondary.main,
+        backgroundColor: isOver ? "#eaeaea" : "#8ba0a4",
         padding: 2,
         cursor: "pointer",
         "&:hover": {
-          backgroundColor: theme.palette.secondary.dark,
+          backgroundColor: "#eaeaea",
         },
         transition: "background-color 0.3s ease",
       })}

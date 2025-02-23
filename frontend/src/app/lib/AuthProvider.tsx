@@ -14,6 +14,8 @@ import {
   // UserCredential,
   User,
 } from "firebase/auth";
+import { User as BackendUser } from "@/__generated__/types";
+import { findUserByFirebaseUid } from "./serverQueries";
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -29,6 +31,7 @@ const AuthProvider = ({
   children: React.ReactNode;
 }): React.ReactNode => {
   const [user, setUser] = useState<User | null>(null);
+  const [backendUser, setBackendUser] = useState<BackendUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,6 +43,25 @@ const AuthProvider = ({
 
     return () => unsubscribe();
   }, []);
+
+  // Fetch the backend user only when a firebase user exists
+  useEffect(() => {
+    if (user) {
+      const fetchBackendUser = async () => {
+        try {
+          const fetchedUser = await findUserByFirebaseUid(user.uid);
+          setBackendUser(fetchedUser);
+        } catch (error) {
+          console.error("Error fetching backend user:", error);
+          setBackendUser(null);
+        }
+      };
+      fetchBackendUser();
+    } else {
+      // Clear backend user when there is no firebase user
+      setBackendUser(null);
+    }
+  }, [user]);
 
   // Sign up with email and password
   const signUp = (email: string, password: string) => {
@@ -65,6 +87,7 @@ const AuthProvider = ({
   // Context value
   const value = {
     user,
+    backendUser,
     loading,
     signUp,
     signIn,

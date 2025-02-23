@@ -4,9 +4,11 @@
 // TODO - Create an AuthContext to manage user authentication
 import { createContext } from "react";
 import { UserCredential, User } from "firebase/auth";
+import { User as BackendUser } from "@/__generated__/types";
 
 interface AuthContextType {
   user: User | null;
+  backendUser: BackendUser | null;
   loading: boolean;
   signUp: (email: string, password: string) => Promise<UserCredential>;
   signIn: (email: string, password: string) => Promise<UserCredential>;

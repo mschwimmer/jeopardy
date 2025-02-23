@@ -33,27 +33,29 @@ const Category: React.FC<CategoryProps> = ({
   };
 
   const handleBlurOrEnter = async () => {
+    // Determine the final category value
+    const finalCategory = newCategory.trim() === "" ? "Blank :(" : newCategory;
+
+    // Update local state to reflect the final value
+    setNewCategory(finalCategory);
     try {
-      if (!newCategory.trim()) {
-        alert("Category cannot be empty");
-      } else {
-        // console.log("Handle blur or enter, about to update category");
-        // console.log(newCategory);
-        await updateCategory({
-          variables: {
-            gameBoardId,
-            index: categoryIndex,
-            category: newCategory,
+      // console.log("Handle blur or enter, about to update category");
+      // console.log(newCategory);
+      await updateCategory({
+        variables: {
+          gameBoardId,
+          index: categoryIndex,
+          category: finalCategory,
+        },
+        refetchQueries: [
+          {
+            query: FindGameBoardDocument,
+            variables: { gameBoardId },
           },
-          refetchQueries: [
-            {
-              query: FindGameBoardDocument,
-              variables: { gameBoardId },
-            },
-          ],
-        });
-        onUpdateCategory(newCategory, categoryIndex);
-      }
+        ],
+      });
+      // Update parent state with final value
+      onUpdateCategory(finalCategory, categoryIndex);
     } catch (e) {
       console.error("Error updating category:", e);
     }
@@ -97,10 +99,7 @@ const Category: React.FC<CategoryProps> = ({
             },
           })}
           onChange={(e) => {
-            const trimmedValue = e.target.value.trim();
-            if (trimmedValue || e.target.value === "") {
-              setNewCategory(e.target.value); // Only set if not purely whitespace
-            }
+            setNewCategory(e.target.value); // Only set if not purely whitespace
           }}
           onBlur={handleBlurOrEnter}
           onKeyDown={(e) => {

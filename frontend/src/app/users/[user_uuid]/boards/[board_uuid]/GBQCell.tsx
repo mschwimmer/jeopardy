@@ -66,7 +66,7 @@ const GBQCell: React.FC<GBQCellProps> = ({ gameBoardQuestion, id }) => {
         border: `1px solid ${theme.palette.divider}`,
         backgroundColor: isOver
           ? theme.palette.action.hover // Change background when hovered by another draggable
-          : theme.palette.success.main,
+          : "#1b4552",
         cursor: "pointer",
         "&:hover": {
           backgroundColor: theme.palette.success.dark,

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Button, TextField } from "@mui/material";
-// TODO reroute to the new gameboard
-// import { useRouter } from "next/router";
+import { useRouter, usePathname } from "next/navigation";
+
 import { useCreateGameBoardMutation } from "@/__generated__/graphql";
 
 interface NewGameBoardProps {
@@ -14,6 +14,8 @@ export const NewGameBoard: React.FC<NewGameBoardProps> = ({ user_uuid }) => {
   const userId = parseInt(user_uuid, 10);
   const [gameBoardTitle, setGameBoardTitle] = useState("New Gameboard");
   const [createGameBoard] = useCreateGameBoardMutation();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const handleCreateGameboard = async () => {
     try {
@@ -27,8 +29,12 @@ export const NewGameBoard: React.FC<NewGameBoardProps> = ({ user_uuid }) => {
       }
 
       if (data?.createGameBoard) {
-        // reload the page to show the new gameboard
-        window.location.reload();
+        // redirect user to new gameboard page
+        const newGameBoardId = data.createGameBoard.id;
+        // Remove trailing slash if present to avoid double slashes
+        const currentPath = pathname.replace(/\/$/, "");
+        // Append the new gameboard id to the current URL path
+        router.push(`${currentPath}/boards/${newGameBoardId}`);
       } else {
         console.error("No gameboard returned from mutation");
       }

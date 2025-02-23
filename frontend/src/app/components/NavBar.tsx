@@ -10,6 +10,7 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import { styled } from "@mui/material/styles";
 import Link from "next/link";
+import { useAuth } from "../lib/AuthProvider"; // adjust the path as needed
 
 const StyledLink = styled(Link)({
   textDecoration: "none",
@@ -17,6 +18,10 @@ const StyledLink = styled(Link)({
 });
 
 const NavBar = () => {
+  const { backendUser } = useAuth(); // Get the current user from your auth context
+
+  // If user exists, send them to their page; otherwise, to the sign-in page.
+  const myPageHref = backendUser ? `/users/${backendUser.id}` : "/sign-in";
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
@@ -34,7 +39,7 @@ const NavBar = () => {
             <StyledLink href="/questions">Questions</StyledLink>
           </Button>
           <Button color="inherit">
-            <StyledLink href="/users/1">My Page</StyledLink>
+            <StyledLink href={myPageHref}>My Page</StyledLink>
           </Button>
         </Toolbar>
       </AppBar>
