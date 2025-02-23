@@ -1,8 +1,5 @@
-// src/app/users/[user_uuid]/boards/[board_uuid]/EmptyGBQCell.tsx
-
 import {
   Button,
-  Box,
   Checkbox,
   Dialog,
   DialogActions,
@@ -11,11 +8,7 @@ import {
   FormControlLabel,
   TextField,
   Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  SelectChangeEvent,
-  MenuItem,
+  styled,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { useState } from "react";
@@ -35,6 +28,31 @@ interface EmptyQBQCellProps {
   userId: number;
 }
 
+const EmptyGBQCellContainer = styled(Grid, {
+  shouldForwardProp: (prop) => prop !== "isOver",
+})<{ isOver: boolean }>(({ theme, isOver }) => ({
+  height: "16.67%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  textAlign: "center",
+  border: `1px solid ${theme.palette.divider}`,
+  color: theme.palette.gameBoard.emptyCell.contrastText,
+  backgroundColor: isOver
+    ? theme.palette.gameBoard.emptyCell.dark
+    : theme.palette.gameBoard.emptyCell.main,
+  padding: theme.spacing(2),
+  cursor: "pointer",
+  transition: "background-color 0.3s ease",
+  "&:hover": {
+    backgroundColor: theme.palette.gameBoard.emptyCell.light,
+  },
+}));
+
+const CellText = styled(Typography)({
+  margin: "auto",
+});
+
 const EmptyGBQCell: React.FC<EmptyQBQCellProps> = ({
   row,
   col,
@@ -45,7 +63,6 @@ const EmptyGBQCell: React.FC<EmptyQBQCellProps> = ({
   const [editedQuestion, setEditedQuestion] = useState<string>("");
   const [editedAnswer, setEditedAnswer] = useState<string>("");
   const [dailyDouble, setDailyDouble] = useState<boolean>(false);
-  const [points, setPoints] = useState<number>((row + 1) * 100);
   const [createQuestion] = useCreateQuestionMutation();
   const [createGameBoardMapping] = useCreateMappingMutation();
 
@@ -58,12 +75,7 @@ const EmptyGBQCell: React.FC<EmptyQBQCellProps> = ({
     setDailyDouble(event.target.checked);
   };
 
-  const handlePointsChange = (event: SelectChangeEvent<number>) => {
-    setPoints(event.target.value as number);
-  };
-
   const handleSave = async () => {
-    // Validate input
     if (!editedQuestion.trim() || !editedAnswer.trim()) {
       alert("Question or Answer can't be empty dude");
       return;
@@ -85,17 +97,13 @@ const EmptyGBQCell: React.FC<EmptyQBQCellProps> = ({
 
     const newQuestionId = newQuestion.data.createQuestion.id;
 
-    if (points == 100) {
-      setPoints(points * (row + 1));
-    }
-
     const gameBoardMappingInput: CreateGameBoardMappingInput = {
       boardId: gameBoardId,
       questionId: newQuestionId,
       dailyDouble,
       gridRow: row,
       gridCol: col,
-      points,
+      points: 100 * (row + 1),
     };
 
     await createGameBoardMapping({
@@ -111,33 +119,15 @@ const EmptyGBQCell: React.FC<EmptyQBQCellProps> = ({
   const { isOver, setNodeRef } = useDroppable({ id });
 
   return (
-    <Grid
+    <EmptyGBQCellContainer
       ref={setNodeRef}
       size={{ xs: 12 / 5 }}
-      sx={(theme) => ({
-        height: "16.67%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-        border: `1px solid ${theme.palette.divider}`,
-        backgroundColor: isOver ? "#eaeaea" : "#8ba0a4",
-        padding: 2,
-        cursor: "pointer",
-        "&:hover": {
-          backgroundColor: "#eaeaea",
-        },
-        transition: "background-color 0.3s ease",
-      })}
+      isOver={isOver}
       onClick={handleOpen}
     >
-      <Box
-        component={Typography}
-        variant="h6"
-        sx={{ margin: "auto" }}
-      >{`Click to create question`}</Box>
+      <CellText variant="h6">Click to create question</CellText>
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>{"Create Question"}</DialogTitle>
+        <DialogTitle>Create Question</DialogTitle>
         <DialogContent>
           <TextField
             margin="dense"
@@ -170,32 +160,15 @@ const EmptyGBQCell: React.FC<EmptyQBQCellProps> = ({
             label="Daily Double"
             sx={{ marginTop: 2 }}
           />
-          <FormControl fullWidth margin="dense" required>
-            <InputLabel id="points-select-label">Points</InputLabel>
-            <Select
-              margin="dense"
-              label="Points"
-              fullWidth
-              value={points}
-              onChange={handlePointsChange}
-              required
-            >
-              <MenuItem value={100}>100</MenuItem>
-              <MenuItem value={200}>200</MenuItem>
-              <MenuItem value={300}>300</MenuItem>
-              <MenuItem value={400}>400</MenuItem>
-              <MenuItem value={500}>500</MenuItem>
-            </Select>
-          </FormControl>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Cancel</Button>
           <Button onClick={handleSave} variant="contained" color="primary">
-            {"Create"}
+            Create
           </Button>
         </DialogActions>
       </Dialog>
-    </Grid>
+    </EmptyGBQCellContainer>
   );
 };
 

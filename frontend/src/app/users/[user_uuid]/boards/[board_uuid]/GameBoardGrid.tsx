@@ -147,12 +147,14 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard, userId }) => {
           questionId: activeGBQ.question.id,
           gridRow: overRow,
           gridCol: overCol,
+          points: 100 * (overRow + 1),
         };
         const overGBQInput: UpdateGameBoardMappingInput = {
           boardId: gameBoard.id,
           questionId: overGBQ.question.id,
           gridRow: activeRow,
           gridCol: activeCol,
+          points: 100 * (activeRow + 1),
         };
 
         await updateMapping({
@@ -178,6 +180,7 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard, userId }) => {
           questionId: activeGBQ.question.id,
           gridRow: overRow,
           gridCol: overCol,
+          points: 100 * (overRow + 1),
         };
         await updateMapping({
           variables: { input: activeGBQInput },

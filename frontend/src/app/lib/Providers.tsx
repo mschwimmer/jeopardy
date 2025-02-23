@@ -6,8 +6,8 @@ import AuthProvider from "./AuthProvider";
 import client from "./apolloClient";
 import { ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
-// import theme from "./theme";
-import { theme1 } from "./theme";
+
+import theme from "./theme";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v14-appRouter";
 
 interface ProviderProps {
@@ -19,7 +19,7 @@ const Providers = ({ children }: ProviderProps) => {
     <AuthProvider>
       <ApolloProvider client={client}>
         <AppRouterCacheProvider>
-          <ThemeProvider theme={theme1} defaultMode="system">
+          <ThemeProvider theme={theme} defaultMode="system">
             <CssBaseline />
             {children}
           </ThemeProvider>
