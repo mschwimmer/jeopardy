@@ -11,6 +11,7 @@ import Button from "@mui/material/Button";
 import { styled } from "@mui/material/styles";
 import Link from "next/link";
 import { useAuth } from "../lib/AuthProvider"; // adjust the path as needed
+import { useRouter } from "next/navigation";
 
 const StyledLink = styled(Link)({
   textDecoration: "none",
@@ -18,10 +19,15 @@ const StyledLink = styled(Link)({
 });
 
 const NavBar = () => {
-  const { backendUser } = useAuth(); // Get the current user from your auth context
+  const { backendUser, logout } = useAuth(); // Get the current user from your auth context
+  const router = useRouter();
 
-  // If user exists, send them to their page; otherwise, to the sign-in page.
-  const myPageHref = backendUser ? `/users/${backendUser.id}` : "/sign-in";
+  const handleLogout = async () => {
+    await logout();
+    router.push("/"); // Redirect to the home page (or "/sign-in")
+    // Do logout flourish?
+  };
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
@@ -35,9 +41,22 @@ const NavBar = () => {
           <Button color="inherit">
             <StyledLink href="/questions">Questions</StyledLink>
           </Button>
-          <Button color="inherit">
-            <StyledLink href={myPageHref}>My Page</StyledLink>
-          </Button>
+          {backendUser ? (
+            <>
+              <Button color="inherit">
+                <StyledLink href={`/users/${backendUser.id}`}>
+                  My Page
+                </StyledLink>
+              </Button>
+              <Button color="inherit" onClick={handleLogout}>
+                Logout
+              </Button>
+            </>
+          ) : (
+            <Button color="inherit">
+              <StyledLink href="/sign-in">Sign In</StyledLink>
+            </Button>
+          )}
         </Toolbar>
       </AppBar>
     </Box>

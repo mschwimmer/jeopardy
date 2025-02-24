@@ -79,7 +79,7 @@ const AuthProvider = ({
     return signInWithPopup(fireBaseAuth, provider);
   };
 
-  // Sign out
+  // Log out
   const logout = () => {
     return signOut(fireBaseAuth);
   };
