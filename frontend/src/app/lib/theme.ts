@@ -39,6 +39,8 @@ const baseSecondaryColor = "#58b3b6";
 const baseBackgroundColor = "#f1d5d9";
 const basePaperColor = "#f8eef0";
 const baseInfoColor = "#12343b";
+const baseSuccessColor = "#698e9d";
+const baseErrorColor = "#EE9CAD";
 
 const categoryColor = "#94504b"; // Example color for Category
 const emptyCellColor = "#208585"; // Example color for Empty Cell
@@ -78,8 +80,8 @@ let theme = createTheme({
       default: baseBackgroundColor,
       paper: basePaperColor,
     },
-    success: { main: "#698e9d" },
-    error: { main: "#EE9CAD" },
+    success: { main: baseSuccessColor },
+    error: { main: baseErrorColor },
     info: {
       main: baseInfoColor,
       light: lighten(baseInfoColor, 0.2),
