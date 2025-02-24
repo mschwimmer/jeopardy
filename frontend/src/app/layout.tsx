@@ -26,8 +26,11 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Jeopardy Frontend",
-  description: "Frontend for jeopardy game application boi",
+  title: "The Trivia Game",
+  description: "The best Trivia app you've ever laid your eggs in",
+  icons: {
+    icon: "/dog-but-orange.svg",
+  },
 };
 
 export default function RootLayout({
