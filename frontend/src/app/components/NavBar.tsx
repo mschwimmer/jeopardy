@@ -30,10 +30,7 @@ const NavBar = () => {
             <StyledLink href="/">The Trivia Game</StyledLink>
           </Typography>
           <Button color="inherit">
-            <StyledLink href="/admin">Admin</StyledLink>
-          </Button>
-          <Button color="inherit">
-            <StyledLink href="/games">GameBoards</StyledLink>
+            <StyledLink href="/game-boards">GameBoards</StyledLink>
           </Button>
           <Button color="inherit">
             <StyledLink href="/questions">Questions</StyledLink>

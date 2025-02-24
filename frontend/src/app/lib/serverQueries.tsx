@@ -104,3 +104,24 @@ export async function fetchAllQuestions() {
   });
   return data.fetchAllQuestions;
 }
+
+export const ALL_GAMEBOARDS_QUERY = gql`
+  query fetchAllGameBoards {
+    fetchAllGameBoards {
+      id
+      createdAt
+      updatedAt
+      userId
+      title
+      categories
+    }
+  }
+`;
+
+export async function fetchAllGameBoards() {
+  const { data } = await client.query({
+    query: ALL_GAMEBOARDS_QUERY,
+    fetchPolicy: "network-only",
+  });
+  return data.fetchAllGameBoards;
+}

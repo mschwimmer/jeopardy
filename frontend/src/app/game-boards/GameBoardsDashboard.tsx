@@ -1,27 +1,33 @@
-//src/app/questions/QuestionsDashboard.tsx
+// src/app/game-boards/GameBoardsDashboard.tsx
 "use client";
+
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { Box, Typography } from "@mui/material";
-import { Question } from "@/__generated__/types";
+import { GameBoard } from "@/__generated__/types";
 import React from "react";
 
-interface QuestionsDashboardProps {
-  questions: Question[];
+interface GameBoardsDashboardProps {
+  gameBoards: GameBoard[];
 }
 
 const columns: GridColDef[] = [
   { field: "id", headerName: "ID", width: 70 },
   {
-    field: "question",
-    headerName: "Question",
+    field: "title",
+    headerName: "Title",
     flex: 1,
     minWidth: 300,
   },
   {
-    field: "answer",
-    headerName: "Answer",
+    field: "categories",
+    headerName: "Categories",
     flex: 1,
-    minWidth: 200,
+    minWidth: 300,
+    valueFormatter: (value) => {
+      const categories: (string | null)[] = value;
+      if (!categories || !Array.isArray(categories)) return "";
+      return categories.filter((cat) => cat != null).join(", ");
+    },
   },
   { field: "userId", headerName: "User ID", width: 100 },
   {
@@ -37,20 +43,20 @@ const columns: GridColDef[] = [
   },
 ];
 
-const QuestionsDashboard: React.FC<QuestionsDashboardProps> = ({
-  questions,
+const GameBoardsDashboard: React.FC<GameBoardsDashboardProps> = ({
+  gameBoards,
 }) => {
   return (
     <Box sx={{ width: "100%", mt: 2 }}>
       <Typography variant="h4" gutterBottom>
-        All User Generated Questions
+        All User Generated GameBoards
       </Typography>
       <Typography variant="body1" gutterBottom>
-        If only there was a way to use these questions in my gameboard. Hmm. If
-        only..
+        It would sure be cool if you could click on a gameboard and see a little
+        preview of it. If only we had the technology.
       </Typography>
-      <DataGrid<Question>
-        rows={questions}
+      <DataGrid<GameBoard>
+        rows={gameBoards}
         columns={columns}
         pageSizeOptions={[5]}
         initialState={{
@@ -67,4 +73,4 @@ const QuestionsDashboard: React.FC<QuestionsDashboardProps> = ({
   );
 };
 
-export default QuestionsDashboard;
+export default GameBoardsDashboard;
