@@ -9,7 +9,7 @@ name = "backend" # Name of the binary
 # path = "src/main.rs"    # Default path is "src/main.rs"
 
 [dependencies]
-axum = "0.8.1"
+axum = { version = "0.8.1", features = ["macros"] }
 async-graphql = { version = "7.0.15", default-features = false, features = [
     "chrono",
     "playground",
@@ -39,6 +39,11 @@ derive_builder = "0.20.2"
 dotenvy = "0.15.7"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+jsonwebtoken = "9.3.1"
+reqwest = { version = "0.12.12", features = ["json"] }
+serde = "1.0.218"
+async-trait = "0.1.86"
+
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt-multi-thread"] }

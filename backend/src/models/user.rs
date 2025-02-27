@@ -27,7 +27,7 @@ use diesel_async::{AsyncPgConnection, RunQueryDsl};
 ///
 /// println!("{:?}", user);
 /// ```
-#[derive(Queryable, SimpleObject, Selectable, Debug, Builder)]
+#[derive(Queryable, SimpleObject, Selectable, Debug, Builder, Clone)]
 #[diesel(table_name = users)]
 pub struct User {
     /// The unique identifier for the user.

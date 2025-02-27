@@ -18,6 +18,16 @@ impl QuestionQuery {
             .get()
             .await
             .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
+
+        // // Optional authentication
+        // if let Some(user) = get_user_from_context(ctx) {
+        //     println!("Authenticated user: {}", user.uid());
+        //     // Do something with the user...
+        // } else {
+        //     println!("Anonymous access");
+        //     // Handle anonymous access...
+        // }
+
         let question: Question = Question::find_by_id(&mut conn, question_id).await?;
         Ok(question)
     }

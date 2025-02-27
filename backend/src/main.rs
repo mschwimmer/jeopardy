@@ -1,7 +1,9 @@
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
+use axum::extract::FromRequestParts;
 use axum::response::IntoResponse;
 use axum::{extract::Extension, response::Html, routing::get, Router};
+use backend::auth::firebase_auth::AuthenticatedUser;
 use backend::db::pool::create_app_pool;
 use backend::graphql::schema::{create_schema, AppSchema};
 use dotenvy::dotenv;
@@ -24,8 +26,41 @@ async fn graphql_playground() -> Html<String> {
     Html(playground_source(GraphQLPlaygroundConfig::new("/graphql")))
 }
 
-async fn graphql_handler(schema: Extension<AppSchema>, req: GraphQLRequest) -> impl IntoResponse {
-    GraphQLResponse::from(schema.execute(req.0).await)
+#[axum::debug_handler]
+async fn graphql_handler(
+    schema: Extension<AppSchema>,
+    auth_user: Extension<Option<AuthenticatedUser>>,
+    req: GraphQLRequest,
+) -> impl IntoResponse {
+    // Build the context with the authenticated user (if available)
+    let mut request = req.0;
+
+    if let Some(user) = auth_user.0 {
+        tracing::info!("Authenticated request from user: {:?}", user);
+        request = request.data(user);
+    } else {
+        tracing::info!("Unauthenticated GraphQL request");
+    }
+
+    GraphQLResponse::from(schema.execute(request).await)
+}
+
+async fn auth_middleware(
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> impl IntoResponse {
+    // Split request into parts
+    let (mut parts, body) = request.into_parts();
+
+    // If successful, add it to extensions
+    if let Ok(user) = AuthenticatedUser::from_request_parts(&mut parts, &()).await {
+        parts.extensions.insert(user);
+    }
+    // Reassemble the request with the (possibly updated) parts.
+    let request = axum::extract::Request::from_parts(parts, body);
+
+    // Continue to the next middleware/handler
+    next.run(request).await
 }
 
 #[tokio::main]
@@ -48,6 +83,12 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         // .json() // Uncomment for JSON formatted logs
         .init();
 
+    // Get Firebase configuration from environment
+    let firebase_project_id =
+        env::var("FIREBASE_PROJECT_ID").unwrap_or_else(|_| "jeopardy-b4166".to_string());
+
+    tracing::info!("Using Firebase project ID: {}", firebase_project_id);
+
     // Try to get a connection from our DBPool
     let pool = create_app_pool()?;
 
@@ -57,6 +98,8 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let allowed_origin =
         env::var("ALLOWED_ORIGIN").unwrap_or_else(|_| "http://localhost:3000".to_string());
 
+    tracing::info!("Allowed origin: {}", allowed_origin);
+
     // Configure CORS
     let cors = CorsLayer::new()
         .allow_origin(allowed_origin.parse::<HeaderValue>()?)
@@ -64,10 +107,16 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         .allow_headers([CONTENT_TYPE, AUTHORIZATION])
         .allow_credentials(true); // In case of cookies or other credentials
 
+    // Add Firebase project ID to app state
+    let app_state = firebase_project_id;
+
     let app = Router::new()
         .route("/", get(root_handler))
         .route("/graphql", get(graphql_playground).post(graphql_handler))
         .layer(Extension(schema))
+        .layer(Extension(app_state))
+        .layer(Extension(None::<AuthenticatedUser>)) // Default empty user
+        .layer(axum::middleware::from_fn(auth_middleware)) // Overrides with Some(user) if exists
         .layer(cors);
 
     let port = env::var("PORT")
