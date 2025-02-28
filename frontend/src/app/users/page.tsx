@@ -1,12 +1,13 @@
 // src/app/users/page.tsx
 "use client";
 
-import styles from "./page.module.css";
+import styles from "../styles/common.module.css";
+import pageStyles from "./page.module.css";
 import { List, ListItem, Typography } from "@mui/material";
 
 export default function UsersPage() {
   return (
-    <div className={styles.page}>
+    <div className={`${pageStyles.page} ${styles.page}`}>
       <main className={styles.main}>
         <ol>
           <Typography variant="h2" gutterBottom>

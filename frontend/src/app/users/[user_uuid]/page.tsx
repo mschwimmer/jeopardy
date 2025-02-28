@@ -1,7 +1,8 @@
 // src/app/users/[user_uuid]/page.tsx
 
 import { List, ListItem } from "@mui/material";
-import styles from "./page.module.css";
+import styles from "../../styles/common.module.css";
+import pageStyles from "./page.module.css";
 import UserGameBoardDashboard from "./UserGameBoardDashboard";
 import { NewGameBoard } from "./NewGameBoard";
 import { UserGamesDasboard } from "./UserGamesDasboard";
@@ -15,7 +16,7 @@ export default async function UserPage({
   const { user_uuid } = await params;
   // console.log("user_uuid in UserPage:", user_uuid);
   return (
-    <div className={styles.page}>
+    <div className={`${pageStyles.page} ${styles.page}`}>
       <main className={styles.main}>
         <h1>User Page</h1>
         <List>

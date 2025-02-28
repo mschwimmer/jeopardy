@@ -10,12 +10,17 @@ import GameCategory from "./GameCategory";
 import { useGameContext } from "./GameContext";
 import Grid from "@mui/material/Grid2";
 import { Paper } from "@mui/material";
+import styles from "./page.module.css";
 
 interface GameBoardGridProps {
+  className?: string;
   gameBoard: GameBoard;
 }
 
-const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard }) => {
+const GameBoardGrid: React.FC<GameBoardGridProps> = ({
+  gameBoard,
+  className,
+}) => {
   const { setCurrentGameBoardQuestion } = useGameContext();
   const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(
     new Set()
@@ -68,6 +73,7 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard }) => {
         height: "80vh",
         margin: "auto",
       }}
+      className={`${styles.gameBoardBase} ${className || ""}`}
     >
       <Grid
         container

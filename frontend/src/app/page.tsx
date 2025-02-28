@@ -1,10 +1,11 @@
-import styles from "./page.module.css";
+import styles from "./styles/common.module.css";
+import pageStyles from "./page.module.css";
 import { Typography } from "@mui/material";
 import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <div className={styles.page}>
+    <div className={`${pageStyles.page} ${styles.page}`}>
       <header>
         <Typography variant="h1">The Trivia Game</Typography>
       </header>

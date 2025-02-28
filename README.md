@@ -11,6 +11,7 @@ This is the Jeopardy monorepo
 Find the /infrastructure directory
 
 ```sh
+docker compose build
 docker compose up
 ```
 

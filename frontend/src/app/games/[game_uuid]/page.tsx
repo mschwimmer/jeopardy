@@ -1,4 +1,5 @@
-import styles from "./page.module.css";
+import pageStyles from "./page.module.css";
+import styles from "../../styles/common.module.css";
 import * as React from "react";
 import GameBoardGrid from "./GameBoardGrid";
 import Scoreboard from "./Scoreboard";
@@ -22,8 +23,13 @@ export default async function GamePage({
       <div className={styles.page}>
         <main className={styles.main}>
           <GameContextProvider game_uuid={game_uuid}>
-            <Scoreboard />
-            <GameBoardGrid gameBoard={gameBoard} />
+            <div className={pageStyles.gameContainer}>
+              <Scoreboard className={pageStyles.scoreboard} />
+              <GameBoardGrid
+                gameBoard={gameBoard}
+                className={pageStyles.gameBoard}
+              />
+            </div>
           </GameContextProvider>
         </main>
       </div>
