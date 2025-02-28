@@ -27,7 +27,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "The Trivia Game",
+  title: "Trivia Friends",
   description: "The best Trivia app you've ever laid your eggs in",
   icons: {
     icon: "/dog-but-orange.svg",

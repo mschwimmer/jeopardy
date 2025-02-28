@@ -66,34 +66,35 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({
   }
 
   return (
-    <Paper
-      sx={{
-        padding: 2,
-        width: "75%",
-        height: "80vh",
-        margin: "auto",
-      }}
-      className={`${styles.gameBoardBase} ${className || ""}`}
-    >
-      <Grid
-        container
-        spacing={0}
+    <div className={`${styles.gameBoardBase} ${className || ""}`}>
+      <Paper
         sx={{
-          height: "100%",
-          textAlign: "center",
-          alignItems: "stretch",
+          padding: 2,
+          width: "75%",
+          height: "80vh",
+          margin: "auto",
         }}
       >
-        <QueryResult error={error} loading={loading} data={data}>
-          {(gameBoard.categories as string[]).map(
-            (category: string, index: number) => (
-              <GameCategory key={`$0-${index}`} category={category} />
-            )
-          )}
-          {cells}
-        </QueryResult>
-      </Grid>
-    </Paper>
+        <Grid
+          container
+          spacing={0}
+          sx={{
+            height: "100%",
+            textAlign: "center",
+            alignItems: "stretch",
+          }}
+        >
+          <QueryResult error={error} loading={loading} data={data}>
+            {(gameBoard.categories as string[]).map(
+              (category: string, index: number) => (
+                <GameCategory key={`$0-${index}`} category={category} />
+              )
+            )}
+            {cells}
+          </QueryResult>
+        </Grid>
+      </Paper>
+    </div>
   );
 };
 
