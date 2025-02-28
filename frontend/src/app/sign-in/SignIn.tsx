@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
@@ -17,10 +18,10 @@ import MuiCard from "@mui/material/Card";
 import { styled } from "@mui/material/styles";
 import ForgotPassword from "./components/ForgotPassword";
 import AppTheme from "../shared-theme/AppTheme";
-import ColorModeSelect from "../shared-theme/ColorModeSelect";
 import { GoogleIcon, DogIcon } from "./components/CustomIcons";
 import type {} from "@mui/material/themeCssVarsAugmentation";
 
+import { ApolloError } from "@apollo/client";
 import { useAuth } from "../lib/AuthProvider";
 import { useRouter } from "next/navigation";
 import { findUserByFirebaseUid } from "../lib/serverQueries";
@@ -35,7 +36,7 @@ const Card = styled(MuiCard)(({ theme }) => ({
   gap: theme.spacing(2),
   margin: "auto",
   [theme.breakpoints.up("sm")]: {
-    maxWidth: "450px",
+    width: "450px",
   },
   boxShadow:
     "hsla(220, 30%, 5%, 0.05) 0px 5px 15px 0px, hsla(220, 25%, 10%, 0.05) 0px 15px 35px -5px",
@@ -74,7 +75,11 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState("");
   const [open, setOpen] = React.useState(false);
-  const { signIn, signInWithGoogle, user, loading } = useAuth();
+  const [feedback, setFeedback] = React.useState<{
+    severity: "error" | "info" | "warning" | "success";
+    message: string;
+  } | null>(null);
+  const { signIn, signInWithGoogle } = useAuth();
   const router = useRouter();
 
   const handleClickOpen = () => {
@@ -95,33 +100,67 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     const password = data.get("password") as string;
     try {
       // Call the signIn function from the AuthProvider
-      const result = await signIn(email, password);
-      console.log("User signed in:", result.user);
-      const userResult = await findUserByFirebaseUid(result.user.uid);
+      const firebaseResult = await signIn(email, password);
+      // console.log("User signed in:", result.user);
+      const backendUser = await findUserByFirebaseUid(firebaseResult.user.uid);
       // Optionally, redirect or update UI based on successful sign in
-      router.push("/user/" + userResult.data?.findUserByFirebaseUid?.id);
+      router.push(`/users/${backendUser.id}`);
     } catch (error) {
       console.error("Error signing in:", error);
-      // Optionally, update your state to display an error message in the UI
+      setFeedback({
+        severity: "error",
+        message: "Error signing in. Please try again.",
+      });
     }
   };
 
   const handleSignInWithGoogle = async () => {
     // Sign in existing user with google
     try {
-      // Call the signInWithGoogle function from the AuthProvider
-      const result = await signInWithGoogle();
-      console.log("User signed in with Google:", result.user);
-      if (!result.user) {
-        console.error("Google user not found:", result);
+      const firebaseResult = await signInWithGoogle();
+      if (!firebaseResult.user) {
+        console.error(
+          "[SignInWithGoogle] Firebase gUser not returned:",
+          firebaseResult
+        );
+        setFeedback({
+          severity: "error",
+          message:
+            "No user information returned from Google. Please try again.",
+        });
         return;
       }
-      // Optionally, redirect or update UI based on successful sign in
-      const userResult = await findUserByFirebaseUid(result.user.uid);
-      router.push("/users/" + userResult.id);
+
+      console.log(
+        `[SignInWithGoogle] Checking for existing gUser in db with UID: ${firebaseResult.user.uid}`
+      );
+      const backendUser = await findUserByFirebaseUid(firebaseResult.user.uid);
+      if (backendUser) {
+        console.log(
+          `[SignInWithGoogle] gUser exists in db with UID ${firebaseResult.user.uid}`,
+          backendUser
+        );
+        router.push(`/users/${backendUser.id}`);
+      } else {
+        console.log(
+          `[SignInWithGoogle] No existing gUser found in db. Redirecting to Sign-Up.`
+        );
+        router.push("/sign-up");
+      }
     } catch (error) {
-      console.error("Error signing in with Google:", error);
-      // Optionally, update your state to display an error message in the UI
+      console.error("Error during sign-in with Google:", error);
+      // If the error is an ApolloError, log more detailed info:
+      if (error instanceof ApolloError) {
+        console.error(
+          "[SignInWithGoogle] GraphQL errors:",
+          error.graphQLErrors
+        );
+        console.error("[SignInWithGoogle] Network error:", error.networkError);
+      }
+      setFeedback({
+        severity: "error",
+        message: "Error signing in with Google. Please try again.",
+      });
     }
   };
 
@@ -156,9 +195,6 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
     <AppTheme {...props}>
       <CssBaseline enableColorScheme />
       <SignInContainer direction="column" justifyContent="space-between">
-        <ColorModeSelect
-          sx={{ position: "fixed", top: "1rem", right: "1rem" }}
-        />
         <Card variant="outlined">
           <DogIcon />
           <Typography
@@ -168,6 +204,14 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
           >
             Sign in
           </Typography>
+          {feedback && (
+            <Alert
+              severity={feedback.severity}
+              onClose={() => setFeedback(null)}
+            >
+              {feedback.message}
+            </Alert>
+          )}
           <Box
             component="form"
             onSubmit={handleSignIn}

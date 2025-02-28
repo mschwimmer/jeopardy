@@ -17,10 +17,13 @@ pub struct PlayerMutation;
 impl PlayerMutation {
     /// Create a new player
     async fn create_player(&self, ctx: &Context<'_>, input: CreatePlayerInput) -> Result<Player> {
-        let pool = ctx
-            .data::<DBPool>()
-            .expect("Cannot get DBPool from context");
-        let mut conn = pool.get().await?;
+        let pool = ctx.data::<DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
+        })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
 
         let new_player: NewPlayer = NewPlayer {
             game_id: input.game_id,
@@ -37,10 +40,14 @@ impl PlayerMutation {
         player_id: i64,
         score: i32,
     ) -> Result<Player> {
-        let pool = ctx
-            .data::<DBPool>()
-            .expect("Cannot get DBPool from context");
-        let mut conn = pool.get().await?;
+        let pool = ctx.data::<DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
+        })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
+
         let updated_player = Player::update_player(
             &mut conn,
             player_id,
@@ -59,10 +66,14 @@ impl PlayerMutation {
         player_id: i64,
         player_name: String,
     ) -> Result<Player> {
-        let pool = ctx
-            .data::<DBPool>()
-            .expect("Cannot get DBPool from context");
-        let mut conn = pool.get().await?;
+        let pool = ctx.data::<DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
+        })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
+
         let updated_player = Player::update_player(
             &mut conn,
             player_id,
@@ -76,10 +87,14 @@ impl PlayerMutation {
     }
 
     async fn delete_player(&self, ctx: &Context<'_>, player_id: i64) -> Result<Player> {
-        let pool = ctx
-            .data::<DBPool>()
-            .expect("Cannot get DBPool from context");
-        let mut conn = pool.get().await?;
+        let pool = ctx.data::<DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
+        })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
+
         let player = Player::delete(&mut conn, player_id).await?;
         Ok(player)
     }

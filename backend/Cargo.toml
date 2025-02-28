@@ -4,21 +4,17 @@ version = "0.1.0"
 edition = "2021"
 
 
-[lib]
-# You can omit this section if you're using the default settings
-# path = "src/lib.rs"     # Default path is "src/lib.rs"
-
 [[bin]]
 name = "backend" # Name of the binary
 # path = "src/main.rs"    # Default path is "src/main.rs"
 
 [dependencies]
-axum = "0.7.5"
-async-graphql = { version = "7.0.9", default-features = false, features = [
+axum = { version = "0.8.1", features = ["macros"] }
+async-graphql = { version = "7.0.15", default-features = false, features = [
     "chrono",
     "playground",
 ] }
-async-graphql-axum = "7.0.9"
+async-graphql-axum = "7.0.15"
 diesel = { version = "2.0", default-features = false, features = [
     "postgres",
     "chrono",
@@ -41,6 +37,13 @@ deadpool-diesel = { version = "0.6.1", default-features = false, features = [
 ] }
 derive_builder = "0.20.2"
 dotenvy = "0.15.7"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+jsonwebtoken = "9.3.1"
+reqwest = { version = "0.12.12", features = ["json"] }
+serde = "1.0.218"
+async-trait = "0.1.86"
+
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt-multi-thread"] }

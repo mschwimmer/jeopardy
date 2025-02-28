@@ -1,17 +1,17 @@
 // src/app/questions/page.tsx
-"use client";
 
-import AdminQuestionsDashboard from "../admin/AdminQuestionsDashboard";
-import styles from "./page.module.css";
+import QuestionsDashboard from "./QuestionsDashboard";
+import { fetchAllQuestions } from "../lib/serverQueries";
+import styles from "../styles/common.module.css";
+import pageStyles from "./page.module.css";
 
-export default function QuestionsPage() {
+export default async function QuestionsPage() {
+  const questions = await fetchAllQuestions();
+
   return (
-    <div className={styles.page}>
+    <div className={`${pageStyles.page} ${styles.page}`}>
       <main className={styles.main}>
-        <ol>
-          <h1>Questions Dashboard</h1>
-          <AdminQuestionsDashboard />
-        </ol>
+        <QuestionsDashboard questions={questions} />
       </main>
     </div>
   );

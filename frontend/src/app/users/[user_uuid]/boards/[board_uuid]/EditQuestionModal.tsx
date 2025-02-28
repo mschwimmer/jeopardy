@@ -7,11 +7,6 @@ import {
   DialogContent,
   DialogTitle,
   TextField,
-  Select,
-  SelectChangeEvent,
-  MenuItem,
-  FormControl,
-  InputLabel,
   FormControlLabel,
   Checkbox,
 } from "@mui/material";
@@ -45,30 +40,20 @@ const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
   const [editedQuestion, setEditedQuestion] = useState<string>("");
   const [editedAnswer, setEditedAnswer] = useState<string>("");
   const [dailyDouble, setDailyDouble] = useState<boolean>(false);
-  const [points, setPoints] = useState<number>(100);
-  const [updateQuestion, { loading, error, data }] =
-    useUpdateQuestionMutation();
-  const [
-    updateMapping,
-    { loading: mapLoading, error: mapError, data: mapData },
-  ] = useUpdateMappingMutation();
+  const [updateQuestion] = useUpdateQuestionMutation();
+  const [updateMapping] = useUpdateMappingMutation();
 
   // Update state when the GBQ prop changes
   useEffect(() => {
     setEditedQuestion(gameBoardQuestion.question.question);
     setEditedAnswer(gameBoardQuestion.question.answer);
     setDailyDouble(gameBoardQuestion.mapping.dailyDouble);
-    setPoints(gameBoardQuestion.mapping.points);
   }, [gameBoardQuestion]);
 
   const handleDailyDoubleChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setDailyDouble(event.target.checked);
-  };
-
-  const handlePointsChange = (event: SelectChangeEvent<number>) => {
-    setPoints(event.target.value as number);
   };
 
   const handleSave = async () => {
@@ -86,7 +71,6 @@ const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
       boardId: gameBoardQuestion.mapping.boardId,
       questionId: gameBoardQuestion.question.id,
       dailyDouble,
-      points,
     };
 
     await updateQuestion({ variables: { input: updateQuestionInput } });
@@ -137,22 +121,6 @@ const EditQuestionModal: React.FC<EditQuestionModalProps> = ({
           label="Daily Double"
           sx={{ marginTop: 2 }}
         />
-        <FormControl fullWidth margin="dense" required>
-          <InputLabel id="points-select-label">Points</InputLabel>
-          <Select
-            label="Points"
-            fullWidth
-            value={points}
-            required
-            onChange={handlePointsChange}
-          >
-            <MenuItem value={100}>100</MenuItem>
-            <MenuItem value={200}>200</MenuItem>
-            <MenuItem value={300}>300</MenuItem>
-            <MenuItem value={400}>400</MenuItem>
-            <MenuItem value={500}>500</MenuItem>
-          </Select>
-        </FormControl>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>

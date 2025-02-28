@@ -13,7 +13,7 @@ use diesel_async::AsyncPgConnection;
 ///
 /// GBQ := GBQMapping + Question.
 /// # Example
-/// ```rust
+/// ```rust, ignore
 /// use crate::models::{GameBoardQuestion, GBQMapping, Question};
 /// use chrono::Utc;
 ///

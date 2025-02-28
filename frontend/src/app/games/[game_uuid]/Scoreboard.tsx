@@ -8,19 +8,19 @@ import {
 } from "@/__generated__/graphql";
 import QueryResult from "@/app/components/query-result";
 import PlayerCard from "./PlayerCard";
-import { Box, Fab, Typography, Tooltip } from "@mui/material";
+import { Fab, Tooltip } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import AddIcon from "@mui/icons-material/Add";
 import { Remove } from "@mui/icons-material";
 import { useGameContext } from "./GameContext";
+import styles from "./page.module.css";
 
 interface ScoreboardProps {
-  // game_uuid: string;
+  className?: string;
 }
 
-const Scoreboard: React.FC<ScoreboardProps> = () => {
-  const { game_uuid, currentGameBoardQuestion, setCurrentGameBoardQuestion } =
-    useGameContext();
+const Scoreboard: React.FC<ScoreboardProps> = ({ className }) => {
+  const { game_uuid } = useGameContext();
   const gameId = parseInt(game_uuid, 10);
   const {
     data,
@@ -71,38 +71,45 @@ const Scoreboard: React.FC<ScoreboardProps> = () => {
   };
 
   return (
-    <QueryResult data={data} loading={loading} error={error}>
-      <Grid container spacing={2} sx={{ padding: 2 }}>
-        {data?.fetchPlayersFromGame.map((player) => (
-          <PlayerCard key={player.id} player={player} />
-        ))}
-        <Tooltip title="Add Player" aria-label="add player">
-          <Fab
-            onClick={handleAddPlayer}
-            disabled={addLoading} // you can disable if the mutation is in progress
-            color="primary"
-            aria-label="add"
-          >
-            <AddIcon />
-          </Fab>
-        </Tooltip>
-        <Tooltip title="Remove Player" aria-label="remove player">
-          <Fab
-            onClick={handleDeletePlayer}
-            disabled={deleteLoading}
-            color="secondary"
-            aria-label="remove"
-          >
-            <Remove />
-          </Fab>
-        </Tooltip>
-        {addError && (
-          <p style={{ color: "red" }}>
-            Error adding player: {addError.message}
-          </p>
-        )}
-      </Grid>
-    </QueryResult>
+    <div className={`${styles.scoreboardBase} ${className || ""}`}>
+      <QueryResult data={data} loading={loading} error={error}>
+        <Grid container spacing={2} sx={{ padding: 2, alignItems: "center" }}>
+          {data?.fetchPlayersFromGame.map((player) => (
+            <PlayerCard key={player.id} player={player} />
+          ))}
+          <Tooltip title="Add Player" aria-label="add player">
+            <Fab
+              onClick={handleAddPlayer}
+              disabled={addLoading} // you can disable if the mutation is in progress
+              color="primary"
+              aria-label="add"
+            >
+              <AddIcon />
+            </Fab>
+          </Tooltip>
+          <Tooltip title="Remove Player" aria-label="remove player">
+            <Fab
+              onClick={handleDeletePlayer}
+              disabled={deleteLoading}
+              color="secondary"
+              aria-label="remove"
+            >
+              <Remove />
+            </Fab>
+          </Tooltip>
+          {addError && (
+            <p style={{ color: "red" }}>
+              Error adding player: {addError.message}
+            </p>
+          )}
+          {deleteError && (
+            <p style={{ color: "red" }}>
+              Error deleting player: {deleteError.message}
+            </p>
+          )}
+        </Grid>
+      </QueryResult>
+    </div>
   );
 };
 

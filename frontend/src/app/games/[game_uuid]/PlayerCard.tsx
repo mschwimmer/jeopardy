@@ -26,9 +26,8 @@ interface PlayerCardProps {
 const PlayerCard: React.FC<PlayerCardProps> = ({ player }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [playerName, setPlayerName] = useState(player.playerName);
-  const [updateName, { loading, error }] = useUpdatePlayerNameMutation();
-  const [updateScore, { loading: scoreLoading, error: scoreError }] =
-    useUpdatePlayerScoreMutation();
+  const [updateName] = useUpdatePlayerNameMutation();
+  const [updateScore] = useUpdatePlayerScoreMutation();
   const [currentScore, setScore] = useState(player.score);
   const { currentGameBoardQuestion } = useGameContext();
 
@@ -55,7 +54,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player }) => {
     const questionPoints = currentGameBoardQuestion?.mapping.points || 0;
     const updatedScore = currentScore + questionPoints;
     setScore(updatedScore);
-    console.log("Updated score", updatedScore);
+    // console.log("Updated score", updatedScore);
     try {
       updateScore({
         variables: {
@@ -72,7 +71,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({ player }) => {
     const questionPoints = currentGameBoardQuestion?.mapping.points || 0;
     const updatedScore = currentScore - questionPoints;
     setScore(updatedScore);
-    console.log("Updated score", updatedScore);
+    // console.log("Updated score", updatedScore);
     try {
       updateScore({
         variables: {

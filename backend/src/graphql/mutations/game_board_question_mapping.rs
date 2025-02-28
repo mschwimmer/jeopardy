@@ -39,8 +39,13 @@ impl GameBoardMappingMutation {
         ctx: &Context<'_>,
         input: CreateGameBoardMappingInput,
     ) -> Result<GBQMapping> {
-        let pool = ctx.data::<DBPool>().expect("Can't get DBPool from context");
-        let mut conn = pool.get().await.expect("Failed to get connection");
+        let pool = ctx.data::<DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
+        })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
 
         // Validate GameBoard exists
         let _board = match GameBoard::find_by_id(&mut conn, input.board_id).await {
@@ -99,8 +104,13 @@ impl GameBoardMappingMutation {
         ctx: &Context<'_>,
         input: UpdateGameBoardMappingInput,
     ) -> Result<GBQMapping> {
-        let pool = ctx.data::<DBPool>().expect("Cant get DBPool from context");
-        let mut conn = pool.get().await.expect("Failed to get connection");
+        let pool = ctx.data::<DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
+        })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
 
         let existing_mapping_result = GBQMapping::find_mapping_by_board_and_question(
             &mut conn,

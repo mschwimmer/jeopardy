@@ -1,13 +1,14 @@
 // src/app/users/[user_uuid]/board/[board_uuid]/page.tsx
 
-import styles from "./page.module.css";
+import styles from "../../../../styles/common.module.css";
+import pageStyles from "./page.module.css";
 import GameBoardGrid from "./GameBoardGrid";
 import { fetchGameBoard } from "@/app/lib/serverQueries";
 
 export default async function BoardPage({
   params,
 }: {
-  params: { user_uuid: string; board_uuid: string };
+  params: Promise<{ user_uuid: string; board_uuid: string }>;
 }) {
   const { user_uuid, board_uuid } = await params;
   const gameBoardId = parseInt(board_uuid, 10);
@@ -17,7 +18,7 @@ export default async function BoardPage({
     const gameBoard = await fetchGameBoard(gameBoardId);
 
     return (
-      <div className={styles.page}>
+      <div className={`${pageStyles.page} ${styles.page}`}>
         <main className={styles.main}>
           <GameBoardGrid gameBoard={gameBoard} userId={userId} />
         </main>

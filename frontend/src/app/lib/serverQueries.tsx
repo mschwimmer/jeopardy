@@ -83,3 +83,45 @@ export async function findUserByFirebaseUid(firebaseUid: string) {
   });
   return data.findUserByFirebaseUid;
 }
+
+export const ALL_QUESTIONS_QUERY = gql`
+  query fetchAllQuestions {
+    fetchAllQuestions {
+      id
+      createdAt
+      updatedAt
+      userId
+      question
+      answer
+    }
+  }
+`;
+
+export async function fetchAllQuestions() {
+  const { data } = await client.query({
+    query: ALL_QUESTIONS_QUERY,
+    fetchPolicy: "network-only",
+  });
+  return data.fetchAllQuestions;
+}
+
+export const ALL_GAMEBOARDS_QUERY = gql`
+  query fetchAllGameBoards {
+    fetchAllGameBoards {
+      id
+      createdAt
+      updatedAt
+      userId
+      title
+      categories
+    }
+  }
+`;
+
+export async function fetchAllGameBoards() {
+  const { data } = await client.query({
+    query: ALL_GAMEBOARDS_QUERY,
+    fetchPolicy: "network-only",
+  });
+  return data.fetchAllGameBoards;
+}

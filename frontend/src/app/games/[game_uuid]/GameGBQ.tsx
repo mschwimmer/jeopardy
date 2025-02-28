@@ -21,7 +21,7 @@ const GameGBQ: React.FC<GameGBQProps> = ({
     setOpen(true);
   };
   const handleClose = () => {
-    console.log(`triggered handleClose :)`);
+    // console.log(`triggered handleClose :)`);
     setOpen(false);
   };
 

@@ -39,7 +39,7 @@ pub fn run_migrations_sync(database_url: &str) {
 
 pub async fn establish_super_connection() -> Result<AsyncPgConnection, ConnectionError> {
     dotenv().ok();
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let database_url = env::var("TEST_DATABASE_URL").expect("DATABASE_URL must be set");
     AsyncPgConnection::establish(&database_url).await
 }
 
@@ -57,7 +57,7 @@ pub async fn create_test_database(
 }
 
 pub fn get_test_database_url(test_db: &str) -> String {
-    let url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let url = env::var("TEST_DATABASE_URL").expect("DATABASE_URL must be set");
     // Replace the default database with the test database
     // Use regex as a way of learning regex with Rust
     let re = Regex::new(r"/[^/]+$").unwrap();

@@ -10,14 +10,18 @@ import GameCategory from "./GameCategory";
 import { useGameContext } from "./GameContext";
 import Grid from "@mui/material/Grid2";
 import { Paper } from "@mui/material";
+import styles from "./page.module.css";
 
 interface GameBoardGridProps {
+  className?: string;
   gameBoard: GameBoard;
 }
 
-const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard }) => {
-  const { game_uuid, currentGameBoardQuestion, setCurrentGameBoardQuestion } =
-    useGameContext();
+const GameBoardGrid: React.FC<GameBoardGridProps> = ({
+  gameBoard,
+  className,
+}) => {
+  const { setCurrentGameBoardQuestion } = useGameContext();
   const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(
     new Set()
   );
@@ -62,33 +66,35 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard }) => {
   }
 
   return (
-    <Paper
-      sx={{
-        padding: 2,
-        width: "75%",
-        height: "80vh",
-        margin: "auto",
-      }}
-    >
-      <Grid
-        container
-        spacing={0}
+    <div className={`${styles.gameBoardBase} ${className || ""}`}>
+      <Paper
         sx={{
-          height: "100%",
-          textAlign: "center",
-          alignItems: "stretch",
+          padding: 2,
+          width: "75%",
+          height: "80vh",
+          margin: "auto",
         }}
       >
-        <QueryResult error={error} loading={loading} data={data}>
-          {(gameBoard.categories as string[]).map(
-            (category: string, index: number) => (
-              <GameCategory key={`$0-${index}`} category={category} />
-            )
-          )}
-          {cells}
-        </QueryResult>
-      </Grid>
-    </Paper>
+        <Grid
+          container
+          spacing={0}
+          sx={{
+            height: "100%",
+            textAlign: "center",
+            alignItems: "stretch",
+          }}
+        >
+          <QueryResult error={error} loading={loading} data={data}>
+            {(gameBoard.categories as string[]).map(
+              (category: string, index: number) => (
+                <GameCategory key={`$0-${index}`} category={category} />
+              )
+            )}
+            {cells}
+          </QueryResult>
+        </Grid>
+      </Paper>
+    </div>
   );
 };
 

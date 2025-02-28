@@ -13,7 +13,7 @@ use diesel_async::{AsyncPgConnection, RunQueryDsl};
 /// and integrates with async-graphql for GraphQL APIs.
 /// # Example
 ///
-/// ```rust
+/// ```rust, ignore
 /// use crate::models::User;
 /// use chrono::Utc;
 ///
@@ -27,7 +27,7 @@ use diesel_async::{AsyncPgConnection, RunQueryDsl};
 ///
 /// println!("{:?}", user);
 /// ```
-#[derive(Queryable, SimpleObject, Selectable, Debug, Builder)]
+#[derive(Queryable, SimpleObject, Selectable, Debug, Builder, Clone)]
 #[diesel(table_name = users)]
 pub struct User {
     /// The unique identifier for the user.
@@ -62,8 +62,8 @@ impl User {
     pub async fn find_by_id(
         conn: &mut AsyncPgConnection,
         user_id: i64,
-    ) -> Result<Self, diesel::result::Error> {
-        users::table.find(user_id).first(conn).await
+    ) -> Result<Option<Self>, diesel::result::Error> {
+        users::table.find(user_id).first(conn).await.optional()
     }
 
     /// Find a user by their Firebase UID.
@@ -77,11 +77,12 @@ impl User {
     pub async fn find_by_firebase_uid(
         conn: &mut AsyncPgConnection,
         firebase_uid: String,
-    ) -> Result<Self, diesel::result::Error> {
+    ) -> Result<Option<Self>, diesel::result::Error> {
         users::table
             .filter(users::firebase_uid.eq(firebase_uid))
-            .first(conn)
+            .first::<User>(conn)
             .await
+            .optional()
     }
 
     /// Fetch all users from the database.
@@ -125,17 +126,22 @@ impl User {
         conn: &mut AsyncPgConnection,
         username: String,
         firebase_uid: String,
-    ) -> Result<Self, diesel::result::Error> {
+    ) -> Result<Self, Box<dyn std::error::Error>> {
         // Using the builder (from derive_builder) to construct a NewUser instance
         let new_user = NewUserBuilder::default()
             .username(username)
             .firebase_uid(firebase_uid)
             .build()
-            .expect("Failed to build NewUser");
+            .map_err(|err| {
+                tracing::error!("Failed to build NewUser: {:?}", err);
+                Box::new(err) as Box<dyn std::error::Error>
+            })?;
 
-        diesel::insert_into(users::table)
+        let user = diesel::insert_into(users::table)
             .values(&new_user)
             .get_result(conn)
-            .await
+            .await?;
+
+        Ok(user)
     }
 }

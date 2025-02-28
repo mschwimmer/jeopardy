@@ -1,20 +1,23 @@
 // src/app/users/page.tsx
 "use client";
 
-import styles from "./page.module.css";
-import { List, ListItem } from "@mui/material";
+import styles from "../styles/common.module.css";
+import pageStyles from "./page.module.css";
+import { List, ListItem, Typography } from "@mui/material";
 
 export default function UsersPage() {
   return (
-    <div className={styles.page}>
+    <div className={`${pageStyles.page} ${styles.page}`}>
       <main className={styles.main}>
         <ol>
-          <h1>Users Page</h1>
+          <Typography variant="h2" gutterBottom>
+            Users Page
+          </Typography>
           <p>
-            Not really sure what should be here. Honestly, this shouldn't even
-            be an accesible route.
+            Not really sure what should be here. Honestly, this shouldn&apos;t
+            even be an accesible route.
           </p>
-          <p>Maybe I'll put a good recipe for any lost souls</p>
+          <p>Maybe I&apos;ll put a good recipe for any lost souls</p>
           <List>
             <h2>Ingredients:</h2>
             <ListItem>

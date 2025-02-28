@@ -1,0 +1,73 @@
+name: Deploy Backend to Google Cloud Run
+
+on:
+  push:
+    branches:
+      - release/production
+    paths:
+      - "backend/**"
+
+env:
+  CARGO_TERM_COLOR: always
+  PROJECT_ID: "jeopardy-b4166" # Your Google Cloud project ID
+  REGION: "us-east1" # Your Cloud Run region
+  SERVICE: "backend-image" # Your Cloud Run service name
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1 # Only fetch the latest commit (faster)
+      - name: Build
+        run: cargo build --verbose --release
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    permissions:
+      contents: "read"
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: "Authenticate to Google Cloud"
+        id: "auth"
+        uses: "google-github-actions/auth@v2"
+        with:
+          credentials_json: "${{ secrets.GCP_CREDENTIALS }}" # Uses stored JSON key
+
+      - name: "Authenticate Docker with Google Cloud"
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      - name: "Build and Push Container"
+        run: |
+          DOCKER_TAG="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-rust-repo/${{ env.SERVICE }}:${{ github.sha }}"
+          docker build --tag "${DOCKER_TAG}" -f backend/Dockerfile .
+          docker push "${DOCKER_TAG}"
+
+      - name: "Deploy to Cloud Run"
+        id: "deploy"
+        uses: "google-github-actions/deploy-cloudrun@v2"
+        with:
+          service: "${{ env.SERVICE }}"
+          region: "${{ env.REGION }}"
+          image: "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-rust-repo/${{ env.SERVICE }}:${{ github.sha }}"
+          env_vars: |-
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            ALLOWED_ORIGIN=${{ secrets.ALLOWED_ORIGIN }}
+            RUST_LOG=info
+
+      - name: "Allow unauthenticated invocations"
+        run: |
+          gcloud run services add-iam-policy-binding ${{ env.SERVICE }} \
+            --region ${{ env.REGION }} \
+            --member="allUsers" \
+            --role="roles/run.invoker"
+
+      - name: "Show Cloud Run URL"
+        run: echo "Cloud Run deployed at ${{ steps.deploy.outputs.url }}"

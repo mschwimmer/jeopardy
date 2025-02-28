@@ -16,10 +16,13 @@ impl GameBoardMappingQuery {
         game_board_id: i64,
         question_id: i64,
     ) -> Result<GBQMapping> {
-        let pool = ctx
-            .data::<DBPool>()
-            .expect("Cannot get DBPool from context");
-        let mut conn = pool.get().await?;
+        let pool = ctx.data::<DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
+        })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
 
         let mapping =
             GBQMapping::find_mapping_by_board_and_question(&mut conn, game_board_id, question_id)
@@ -33,10 +36,13 @@ impl GameBoardMappingQuery {
         ctx: &Context<'_>,
         game_board_id: i64,
     ) -> Result<Vec<GBQMapping>> {
-        let pool = ctx
-            .data::<DBPool>()
-            .expect("Cannot get DBPool from context");
-        let mut conn = pool.get().await?;
+        let pool = ctx.data::<DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
+        })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
 
         let mappings = GBQMapping::fetch_mappings_by_board_id(&mut conn, game_board_id).await?;
 

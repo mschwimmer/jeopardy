@@ -11,10 +11,13 @@ pub struct GameBoardQuery;
 impl GameBoardQuery {
     /// Find a single gameboard by id
     async fn find_game_board(&self, ctx: &Context<'_>, game_board_id: i64) -> Result<GameBoard> {
-        let pool = ctx
-            .data::<DBPool>()
-            .expect("Cannot get DBPool from context");
-        let mut conn = pool.get().await?;
+        let pool = ctx.data::<DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
+        })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
         let game_board: GameBoard = GameBoard::find_by_id(&mut conn, game_board_id)
             .await
             .map_err(|e| {
@@ -32,22 +35,26 @@ impl GameBoardQuery {
         ctx: &Context<'_>,
         user_id: i64,
     ) -> Result<Vec<GameBoard>> {
-        let pool = ctx
-            .data::<DBPool>()
-            .expect("Cannot get DBPool from context");
-        let mut conn = pool.get().await.map_err(|e| {
-            async_graphql::Error::new(format!("Failed to get DB connection: {}", e))
+        let pool = ctx.data::<DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
         })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
         let game_boards = GameBoard::fetch_by_user(&mut conn, user_id).await?;
         Ok(game_boards)
     }
 
     /// Fetch all gameboards in the database
     async fn fetch_all_game_boards(&self, ctx: &Context<'_>) -> Result<Vec<GameBoard>> {
-        let pool = ctx
-            .data::<DBPool>()
-            .expect("Cannot get DBPool from context");
-        let mut conn = pool.get().await?;
+        let pool = ctx.data::<DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
+        })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
         let game_boards = GameBoard::all(&mut conn).await?;
         Ok(game_boards)
     }

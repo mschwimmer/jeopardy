@@ -9,7 +9,7 @@ use backend::models::game_board_question_mapping::{
     GameBoardQuestionMapping, NewGameBoardQuestionMapping,
 };
 use backend::models::question::{NewQuestion, Question};
-use backend::models::user::{NewUser, User};
+use backend::models::user::User;
 use diesel_async::AsyncPgConnection;
 
 /// Creates a test fixture with a specified number of game boards and questions.
@@ -38,13 +38,7 @@ pub async fn comprehensive_fixture(
     questions_per_board: usize,
 ) -> (User, Vec<GameBoard>, Vec<Question>) {
     // Create test user
-    let user = create_test_user(
-        conn,
-        Some(NewUser {
-            username: username.to_string(),
-        }),
-    )
-    .await;
+    let user = create_test_user(conn, Some(username.to_string()), None).await;
 
     // Create game boards
     let mut game_boards = Vec::new();

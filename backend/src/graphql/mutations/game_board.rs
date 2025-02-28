@@ -32,10 +32,14 @@ impl GameBoardMutation {
         ctx: &Context<'_>,
         input: CreateGameBoardInput,
     ) -> Result<GameBoard> {
-        let pool = ctx
-            .data::<DBPool>()
-            .expect("Cannot get DBPool from context");
-        let mut conn = pool.get().await.expect("Failed to get connection");
+        let pool = ctx.data::<DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
+        })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
+
         let new_game_board: NewGameBoard = NewGameBoard {
             user_id: input.user_id,
             title: input.title,
@@ -74,8 +78,14 @@ impl GameBoardMutation {
         ctx: &Context<'_>,
         input: UpdateGameBoardInput,
     ) -> Result<GameBoard> {
-        let pool = ctx.data::<DBPool>().expect("Expected DBPool");
-        let mut conn = pool.get().await.expect("Expected connection");
+        let pool = ctx.data::<DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
+        })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
+
         let existing_game_board_result = GameBoard::find_by_id(&mut conn, input.board_id).await;
 
         let _existing_game_board = match existing_game_board_result {
@@ -124,8 +134,13 @@ impl GameBoardMutation {
             return Err(async_graphql::Error::new("Category index must be 0 - 4"));
         }
 
-        let pool = ctx.data::<DBPool>().expect("Expected DBPool");
-        let mut conn = pool.get().await.expect("Expected connection");
+        let pool = ctx.data::<DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
+        })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
 
         let updated: GameBoard =
             GameBoard::update_game_board_category(&mut conn, game_board_id, index, category)

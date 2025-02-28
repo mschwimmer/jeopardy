@@ -1,7 +1,7 @@
 // src/app/users/[user_uuid]/boards/[board_uuid]/GameBoardGrid.tsx
 
 "use client";
-import { useState, useMemo, ReactElement, useEffect } from "react";
+import { useState, ReactElement, useEffect } from "react";
 import {
   useFetchGbQsQuery,
   useUpdateMappingMutation,
@@ -22,6 +22,7 @@ import GBQCell from "./GBQCell";
 import EmptyGBQCell from "./EmptyQBQCell";
 import {
   DndContext,
+  DragEndEvent,
   useSensors,
   useSensor,
   PointerSensor,
@@ -46,10 +47,7 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard, userId }) => {
   const { data, loading, error } = useFetchGbQsQuery({
     variables: { gameBoardId: gameBoard.id },
   });
-  const [
-    updateMapping,
-    { loading: mapLoading, error: mapError, data: mapData },
-  ] = useUpdateMappingMutation();
+  const [updateMapping] = useUpdateMappingMutation();
 
   // Initialize mapping as state
   const [gameBoardQuestionsMap, setGameBoardQuestionsMap] = useState<
@@ -105,26 +103,31 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard, userId }) => {
     })
   );
 
-  const handleDragEnd = async (event: any) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
-    console.log("Entered handleDragEnd");
-    console.log("Active ID:", active?.id);
-    console.log("Over ID:", over?.id);
+    if (process.env.NODE_ENV !== "production") {
+      console.log("Entered handleDragEnd");
+      console.log("Active ID:", active?.id);
+      console.log("Over ID:", over?.id);
+    }
 
     if (!active || !over) {
-      console.log("Drag ended outside the grid or no valid drop target.");
+      // console.log("Drag ended outside the grid or no valid drop target.");
       return;
     }
 
     if (active.id !== over.id) {
       const activeKey = active.id; // e.g. "0,1"
       const overKey = over.id; // e.g. "1,1"
-      console.log(`Dragged from ${active.id} to ${over.id}`);
+      // console.log(`Dragged from ${active.id} to ${over.id}`);
 
       // Deconstruct active ID
-      const [activeRow, activeCol] = active.id.split(",").map(Number);
-      const [overRow, overCol] = over.id.split(",").map(Number);
+      const [activeRow, activeCol] = active.id
+        .toString()
+        .split(",")
+        .map(Number);
+      const [overRow, overCol] = over.id.toString().split(",").map(Number);
 
       // Retrieve GameBoardQuestion objects if any
       const activeGBQ = gameBoardQuestionsMap[activeKey];
@@ -135,7 +138,7 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard, userId }) => {
 
       if (activeGBQ && overGBQ) {
         // Swap the two questions
-        console.log("Swapping questions");
+        // console.log("Swapping questions");
         newMapping[activeKey] = overGBQ;
         newMapping[overKey] = activeGBQ;
         // Update GBQ in backend
@@ -144,12 +147,14 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard, userId }) => {
           questionId: activeGBQ.question.id,
           gridRow: overRow,
           gridCol: overCol,
+          points: 100 * (overRow + 1),
         };
         const overGBQInput: UpdateGameBoardMappingInput = {
           boardId: gameBoard.id,
           questionId: overGBQ.question.id,
           gridRow: activeRow,
           gridCol: activeCol,
+          points: 100 * (activeRow + 1),
         };
 
         await updateMapping({
@@ -166,7 +171,7 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard, userId }) => {
         });
       } else if (activeGBQ && !overGBQ) {
         // Move active question to the empty cell
-        console.log("Moving question to empty cell");
+        // console.log("Moving question to empty cell");
         newMapping[overKey] = activeGBQ;
         delete newMapping[activeKey];
         // Update GBQ in backend
@@ -175,6 +180,7 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard, userId }) => {
           questionId: activeGBQ.question.id,
           gridRow: overRow,
           gridCol: overCol,
+          points: 100 * (overRow + 1),
         };
         await updateMapping({
           variables: { input: activeGBQInput },
@@ -186,7 +192,7 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard, userId }) => {
           ],
         });
       } else if (!activeGBQ && overGBQ) {
-        console.log("Can't move empty cell to filled cell");
+        // console.log("Can't move empty cell to filled cell");
         // Optionally handle dragging empty cell to a filled cell
         return;
       }
@@ -194,7 +200,7 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard, userId }) => {
       // Update the gameBoardQuestions mapping
       setGameBoardQuestionsMap(newMapping);
     } else {
-      console.log("Dragged to the same position, no changes made.");
+      // console.log("Dragged to the same position, no changes made.");
     }
   };
 
