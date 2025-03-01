@@ -95,17 +95,21 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     // Create graphql schema
     let schema = create_schema(pool);
 
-    let allowed_origin =
-        env::var("ALLOWED_ORIGIN").unwrap_or_else(|_| "http://localhost:3000".to_string());
+    let default_origin = "http://localhost:3000".to_string();
+    let allowed_origins: Vec<HeaderValue> = env::var("ALLOWED_ORIGINS")
+        .unwrap_or(default_origin)
+        .split(',')
+        .map(|s| s.trim().parse().unwrap())
+        .collect();
 
-    tracing::info!("Allowed origin: {}", allowed_origin);
+    tracing::info!("Allowed origins: {:?}", allowed_origins);
 
     // Configure CORS
     let cors = CorsLayer::new()
-        .allow_origin(allowed_origin.parse::<HeaderValue>()?)
+        .allow_origin(allowed_origins)
         .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
         .allow_headers([CONTENT_TYPE, AUTHORIZATION])
-        .allow_credentials(true); // In case of cookies or other credentials
+        .allow_credentials(true);
 
     // Add Firebase project ID to app state
     let app_state = firebase_project_id;
