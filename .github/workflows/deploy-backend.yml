@@ -39,6 +39,9 @@ jobs:
           docker build --tag "${DOCKER_TAG}" -f backend/Dockerfile .
           docker push "${DOCKER_TAG}"
 
+      - name: "Debug ALLOWED_ORIGINS"
+        run: echo "ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}"
+
       - name: "Deploy to Cloud Run"
         id: "deploy"
         uses: "google-github-actions/deploy-cloudrun@v2"
@@ -48,7 +51,7 @@ jobs:
           image: "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-rust-repo/${{ env.SERVICE }}:${{ github.sha }}"
           env_vars: |-
             DATABASE_URL=${{ secrets.DATABASE_URL }}
-            ALLOWED_ORIGINS="${{ secrets.ALLOWED_ORIGINS }}"
+            ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
             RUST_LOG=info
 
       - name: "Allow unauthenticated invocations"

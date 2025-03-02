@@ -83,6 +83,11 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         // .json() // Uncomment for JSON formatted logs
         .init();
 
+    tracing::info!("--- Environment Variables ---");
+    for (key, value) in env::vars() {
+        tracing::info!("{} = {}", key, value);
+    }
+
     // Get Firebase configuration from environment
     let firebase_project_id =
         env::var("FIREBASE_PROJECT_ID").unwrap_or_else(|_| "jeopardy-b4166".to_string());
