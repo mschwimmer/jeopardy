@@ -264,6 +264,8 @@ where
             return Err((StatusCode::UNAUTHORIZED, "Token expired"));
         }
 
+        tracing::info!("Created AuthenticatedUser with claims :)");
+
         Ok(AuthenticatedUser {
             claims: token_data.claims,
         })
