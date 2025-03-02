@@ -14,19 +14,8 @@ env:
   SERVICE: "backend-image" # Your Cloud Run service name
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1 # Only fetch the latest commit (faster)
-      - name: Build
-        run: cargo build --verbose --release
-
   deploy:
     runs-on: ubuntu-latest
-    needs: build
 
     permissions:
       contents: "read"

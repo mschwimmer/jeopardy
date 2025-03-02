@@ -96,12 +96,28 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let schema = create_schema(pool);
 
     let default_origin = "http://localhost:3000".to_string();
-    let allowed_origins: Vec<HeaderValue> = env::var("ALLOWED_ORIGINS")
-        .unwrap_or(default_origin)
-        .split(',')
-        .map(|s| s.trim().parse().unwrap())
-        .collect();
-
+    let allowed_origins: Vec<HeaderValue> = match env::var("ALLOWED_ORIGINS") {
+        Ok(origins_str) => {
+            // Check if the string looks like a JSON array
+            if origins_str.trim().starts_with('[') && origins_str.trim().ends_with(']') {
+                // Try to parse as JSON array
+                match serde_json::from_str::<Vec<String>>(&origins_str) {
+                    Ok(origins_vec) => origins_vec
+                        .into_iter()
+                        .map(|s| s.parse().unwrap())
+                        .collect(),
+                    Err(_) => vec![origins_str.parse().unwrap()], // Fallback if JSON parsing fails
+                }
+            } else {
+                // Parse as comma-separated list
+                origins_str
+                    .split(',')
+                    .map(|s| s.trim().parse().unwrap())
+                    .collect()
+            }
+        }
+        Err(_) => vec![default_origin.parse().unwrap()],
+    };
     tracing::info!("Allowed origins: {:?}", allowed_origins);
 
     // Configure CORS
