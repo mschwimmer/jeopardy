@@ -116,8 +116,6 @@ impl AuthenticatedUser {
     pub fn claims(&self) -> &FirebaseClaims {
         &self.claims
     }
-
-    // TODO add function to return backend user ID
 }
 
 /// Returns authenticated user if exists, None otherwise
