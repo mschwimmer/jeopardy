@@ -47,8 +47,8 @@ jobs:
           region: "${{ env.REGION }}"
           image: "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-rust-repo/${{ env.SERVICE }}:${{ github.sha }}"
           env_vars: |-
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
+            DATABASE_URL="${{ secrets.DATABASE_URL }}"
+            ALLOWED_ORIGINS="${{ secrets.ALLOWED_ORIGINS }}"
             RUST_LOG=info
 
       - name: "Allow unauthenticated invocations"
