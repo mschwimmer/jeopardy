@@ -16,7 +16,7 @@ import MuiCard from "@mui/material/Card";
 import { styled } from "@mui/material/styles";
 import AppTheme from "../shared-theme/AppTheme";
 import { GoogleIcon, DogIcon } from "./components/CustomIcons";
-
+import type {} from "@mui/material/themeCssVarsAugmentation";
 import { ApolloError } from "@apollo/client";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../lib/AuthProvider";

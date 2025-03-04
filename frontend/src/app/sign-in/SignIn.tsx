@@ -18,7 +18,7 @@ import Stack from "@mui/material/Stack";
 import MuiCard from "@mui/material/Card";
 import { styled } from "@mui/material/styles";
 import { ApolloError } from "@apollo/client";
-
+import type {} from "@mui/material/themeCssVarsAugmentation";
 import ForgotPassword from "./components/ForgotPassword";
 import AppTheme from "../shared-theme/AppTheme";
 import { GoogleIcon, DogIcon } from "./components/CustomIcons";
