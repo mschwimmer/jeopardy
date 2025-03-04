@@ -5,6 +5,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
+import CircularProgress from "@mui/material/CircularProgress";
 import CssBaseline from "@mui/material/CssBaseline";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Divider from "@mui/material/Divider";
@@ -16,12 +17,12 @@ import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import MuiCard from "@mui/material/Card";
 import { styled } from "@mui/material/styles";
+import { ApolloError } from "@apollo/client";
+
 import ForgotPassword from "./components/ForgotPassword";
 import AppTheme from "../shared-theme/AppTheme";
 import { GoogleIcon, DogIcon } from "./components/CustomIcons";
-import type {} from "@mui/material/themeCssVarsAugmentation";
 
-import { ApolloError } from "@apollo/client";
 import { useAuth } from "../lib/AuthProvider";
 import { useRouter } from "next/navigation";
 import { findUserByFirebaseUid } from "../lib/serverQueries";
@@ -70,126 +71,168 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
 }));
 
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
-  const [emailError, setEmailError] = React.useState(false);
-  const [emailErrorMessage, setEmailErrorMessage] = React.useState("");
-  const [passwordError, setPasswordError] = React.useState(false);
-  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState("");
+  const [formData, setFormData] = React.useState({
+    email: "",
+    password: "",
+  });
+
+  const [formErrors, setFormErrors] = React.useState({
+    email: { error: false, message: "" },
+    password: { error: false, message: "" },
+  });
+
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const [feedback, setFeedback] = React.useState<{
     severity: "error" | "info" | "warning" | "success";
     message: string;
   } | null>(null);
+
   const { signIn, signInWithGoogle } = useAuth();
   const router = useRouter();
 
-  const handleClickOpen = () => {
-    setOpen(true);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    validateField(name, value);
   };
 
-  const handleClose = () => {
-    setOpen(false);
+  const validateField = (name: string, value: string) => {
+    const newErrors = { ...formErrors };
+
+    switch (name) {
+      case "email":
+        if (!value) {
+          newErrors.email = { error: true, message: "Email is required." };
+        } else if (!/\S+@\S+\.\S+/.test(value)) {
+          newErrors.email = {
+            error: true,
+            message: "Please enter a valid email address.",
+          };
+        } else {
+          newErrors.email = { error: false, message: "" };
+        }
+        break;
+      case "password":
+        if (!value) {
+          newErrors.password = {
+            error: true,
+            message: "Password is required.",
+          };
+        } else if (value.length < 6) {
+          newErrors.password = {
+            error: true,
+            message: "Password must be at least 6 characters long.",
+          };
+        } else {
+          newErrors.password = { error: false, message: "" };
+        }
+        break;
+    }
+
+    setFormErrors(newErrors);
+  };
+
+  const validateAllFields = () => {
+    validateField("email", formData.email);
+    validateField("password", formData.password);
+
+    return !(formErrors.email.error || formErrors.password.error);
   };
 
   const handleSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (emailError || passwordError) {
+    setFeedback(null);
+
+    if (!validateAllFields()) {
       return;
     }
-    const data = new FormData(event.currentTarget);
-    const email = data.get("email") as string;
-    const password = data.get("password") as string;
+
+    setIsLoading(true);
+
     try {
-      // Call the signIn function from the AuthProvider
-      const firebaseResult = await signIn(email, password);
-      // console.log("User signed in:", result.user);
+      const firebaseResult = await signIn(formData.email, formData.password);
       const backendUser = await findUserByFirebaseUid(firebaseResult.user.uid);
-      // Optionally, redirect or update UI based on successful sign in
       router.push(`/users/${backendUser.id}`);
     } catch (error) {
       console.error("Error signing in:", error);
-      setFeedback({
-        severity: "error",
-        message: "Error signing in. Please try again.",
-      });
+
+      if (error instanceof ApolloError) {
+        const errorMessage =
+          error.graphQLErrors.length > 0
+            ? error.graphQLErrors[0].message
+            : "Server error occurred. Please try again.";
+
+        setFeedback({
+          severity: "error",
+          message: errorMessage,
+        });
+      } else {
+        setFeedback({
+          severity: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Error signing in. Please try again.",
+        });
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSignInWithGoogle = async () => {
-    // Sign in existing user with google
+    setFeedback(null);
+    setIsGoogleLoading(true);
+
     try {
       const firebaseResult = await signInWithGoogle();
+
       if (!firebaseResult.user) {
-        console.error(
-          "[SignInWithGoogle] Firebase gUser not returned:",
-          firebaseResult
-        );
-        setFeedback({
-          severity: "error",
-          message:
-            "No user information returned from Google. Please try again.",
-        });
-        return;
+        throw new Error("No user information returned from Google");
       }
 
-      console.log(
-        `[SignInWithGoogle] Checking for existing gUser in db with UID: ${firebaseResult.user.uid}`
-      );
       const backendUser = await findUserByFirebaseUid(firebaseResult.user.uid);
+
       if (backendUser) {
-        console.log(
-          `[SignInWithGoogle] gUser exists in db with UID ${firebaseResult.user.uid}`,
-          backendUser
-        );
         router.push(`/users/${backendUser.id}`);
       } else {
-        console.log(
-          `[SignInWithGoogle] No existing gUser found in db. Redirecting to Sign-Up.`
-        );
         router.push("/sign-up");
       }
     } catch (error) {
       console.error("Error during sign-in with Google:", error);
-      // If the error is an ApolloError, log more detailed info:
+
       if (error instanceof ApolloError) {
-        console.error(
-          "[SignInWithGoogle] GraphQL errors:",
-          error.graphQLErrors
-        );
-        console.error("[SignInWithGoogle] Network error:", error.networkError);
+        const errorMessage =
+          error.graphQLErrors.length > 0
+            ? error.graphQLErrors[0].message
+            : "Server error occurred. Please try again.";
+
+        setFeedback({
+          severity: "error",
+          message: errorMessage,
+        });
+      } else {
+        setFeedback({
+          severity: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Error signing in with Google. Please try again.",
+        });
       }
-      setFeedback({
-        severity: "error",
-        message: "Error signing in with Google. Please try again.",
-      });
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
-  const validateInputs = () => {
-    const email = document.getElementById("email") as HTMLInputElement;
-    const password = document.getElementById("password") as HTMLInputElement;
-
-    let isValid = true;
-
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-      setEmailError(true);
-      setEmailErrorMessage("Please enter a valid email address.");
-      isValid = false;
-    } else {
-      setEmailError(false);
-      setEmailErrorMessage("");
-    }
-
-    if (!password.value || password.value.length < 6) {
-      setPasswordError(true);
-      setPasswordErrorMessage("Password must be at least 6 characters long.");
-      isValid = false;
-    } else {
-      setPasswordError(false);
-      setPasswordErrorMessage("");
-    }
-
-    return isValid;
-  };
+  const handleClickOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
 
   return (
     <AppTheme {...props}>
@@ -226,35 +269,38 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
             <FormControl>
               <FormLabel htmlFor="email">Email</FormLabel>
               <TextField
-                error={emailError}
-                helperText={emailErrorMessage}
+                error={formErrors.email.error}
+                helperText={formErrors.email.message}
                 id="email"
                 type="email"
                 name="email"
+                value={formData.email}
+                onChange={handleInputChange}
                 placeholder="your@email.com"
                 autoComplete="email"
                 autoFocus
                 required
                 fullWidth
                 variant="outlined"
-                color={emailError ? "error" : "primary"}
+                color={formErrors.email.error ? "error" : "primary"}
               />
             </FormControl>
             <FormControl>
               <FormLabel htmlFor="password">Password</FormLabel>
               <TextField
-                error={passwordError}
-                helperText={passwordErrorMessage}
+                error={formErrors.password.error}
+                helperText={formErrors.password.message}
                 name="password"
+                value={formData.password}
+                onChange={handleInputChange}
                 placeholder="••••••"
                 type="password"
                 id="password"
                 autoComplete="current-password"
-                autoFocus
                 required
                 fullWidth
                 variant="outlined"
-                color={passwordError ? "error" : "primary"}
+                color={formErrors.password.error ? "error" : "primary"}
               />
             </FormControl>
             <FormControlLabel
@@ -266,9 +312,23 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               type="submit"
               fullWidth
               variant="contained"
-              onClick={validateInputs}
+              disabled={isLoading}
+              sx={{ position: "relative" }}
             >
-              Sign in
+              {isLoading ? (
+                <>
+                  <CircularProgress
+                    size={24}
+                    sx={{
+                      position: "absolute",
+                      color: "primary.light",
+                    }}
+                  />
+                  Signing in...
+                </>
+              ) : (
+                "Sign in"
+              )}
             </Button>
             <Link
               component="button"
@@ -286,9 +346,24 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
               fullWidth
               variant="outlined"
               onClick={handleSignInWithGoogle}
-              startIcon={<GoogleIcon />}
+              disabled={isGoogleLoading}
+              startIcon={isGoogleLoading ? null : <GoogleIcon />}
+              sx={{ position: "relative" }}
             >
-              Sign in with Google
+              {isGoogleLoading ? (
+                <>
+                  <CircularProgress
+                    size={24}
+                    sx={{
+                      position: "absolute",
+                      color: "primary.light",
+                    }}
+                  />
+                  Signing in with Google...
+                </>
+              ) : (
+                "Sign in with Google"
+              )}
             </Button>
             <Typography sx={{ textAlign: "center" }}>
               Don&apos;t have an account?{" "}
