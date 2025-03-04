@@ -83,10 +83,10 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         // .json() // Uncomment for JSON formatted logs
         .init();
 
-    tracing::info!("--- Environment Variables ---");
-    for (key, value) in env::vars() {
-        tracing::info!("{} = {}", key, value);
-    }
+    // tracing::info!("--- Environment Variables ---");
+    // for (key, value) in env::vars() {
+    //     tracing::info!("{} = {}", key, value);
+    // }
 
     // Get Firebase configuration from environment
     let firebase_project_id =

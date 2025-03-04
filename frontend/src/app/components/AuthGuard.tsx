@@ -3,6 +3,7 @@
 import React, { useEffect } from "react";
 import { useAuth } from "../lib/AuthProvider";
 import { useRouter, usePathname } from "next/navigation";
+import { CircularProgress } from "@mui/material";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -18,8 +19,18 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   }, [user, loading, router, pathname]);
 
   if (loading && !user) {
-    // TODO replace with MUI loading component
-    return <div>Loading...</div>;
+    return (
+      <>
+        <CircularProgress
+          size={24}
+          sx={{
+            position: "absolute",
+            color: "primary.light",
+          }}
+        />
+        Loading...
+      </>
+    );
   }
 
   return <>{children}</>;
