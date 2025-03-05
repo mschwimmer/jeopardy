@@ -17,15 +17,12 @@ import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import MuiCard from "@mui/material/Card";
 import { styled } from "@mui/material/styles";
-import { ApolloError } from "@apollo/client";
 import type {} from "@mui/material/themeCssVarsAugmentation";
 import ForgotPassword from "./components/ForgotPassword";
 import AppTheme from "../shared-theme/AppTheme";
 import { GoogleIcon, DogIcon } from "./components/CustomIcons";
-
-import { useAuth } from "../lib/AuthProvider";
-import { useRouter } from "next/navigation";
-import { findUserByFirebaseUid } from "../lib/serverQueries";
+import { useSignIn } from "./useSignIn";
+import { useSignInForm } from "./useSignInForm";
 
 const Card = styled(MuiCard)(({ theme }) => ({
   overflowY: "auto",
@@ -71,164 +68,24 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
 }));
 
 export default function SignIn(props: { disableCustomTheme?: boolean }) {
-  const [formData, setFormData] = React.useState({
-    email: "",
-    password: "",
-  });
+  const { formData, formErrors, handleInputChange, validateAllFields } =
+    useSignInForm();
+  const {
+    handleSignIn,
+    handleSignInWithGoogle,
+    isLoading,
+    isGoogleLoading,
+    feedback,
+    setFeedback,
+  } = useSignIn();
 
-  const [formErrors, setFormErrors] = React.useState({
-    email: { error: false, message: "" },
-    password: { error: false, message: "" },
-  });
-
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
   const [open, setOpen] = React.useState(false);
-  const [feedback, setFeedback] = React.useState<{
-    severity: "error" | "info" | "warning" | "success";
-    message: string;
-  } | null>(null);
 
-  const { signIn, signInWithGoogle } = useAuth();
-  const router = useRouter();
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    validateField(name, value);
-  };
-
-  const validateField = (name: string, value: string) => {
-    const newErrors = { ...formErrors };
-
-    switch (name) {
-      case "email":
-        if (!value) {
-          newErrors.email = { error: true, message: "Email is required." };
-        } else if (!/\S+@\S+\.\S+/.test(value)) {
-          newErrors.email = {
-            error: true,
-            message: "Please enter a valid email address.",
-          };
-        } else {
-          newErrors.email = { error: false, message: "" };
-        }
-        break;
-      case "password":
-        if (!value) {
-          newErrors.password = {
-            error: true,
-            message: "Password is required.",
-          };
-        } else if (value.length < 6) {
-          newErrors.password = {
-            error: true,
-            message: "Password must be at least 6 characters long.",
-          };
-        } else {
-          newErrors.password = { error: false, message: "" };
-        }
-        break;
-    }
-
-    setFormErrors(newErrors);
-  };
-
-  const validateAllFields = () => {
-    validateField("email", formData.email);
-    validateField("password", formData.password);
-
-    return !(formErrors.email.error || formErrors.password.error);
-  };
-
-  const handleSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFeedback(null);
-
-    if (!validateAllFields()) {
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const firebaseResult = await signIn(formData.email, formData.password);
-      const backendUser = await findUserByFirebaseUid(firebaseResult.user.uid);
-      router.push(`/users/${backendUser.id}`);
-    } catch (error) {
-      console.error("Error signing in:", error);
-
-      if (error instanceof ApolloError) {
-        const errorMessage =
-          error.graphQLErrors.length > 0
-            ? error.graphQLErrors[0].message
-            : "Server error occurred. Please try again.";
-
-        setFeedback({
-          severity: "error",
-          message: errorMessage,
-        });
-      } else {
-        setFeedback({
-          severity: "error",
-          message:
-            error instanceof Error
-              ? error.message
-              : "Error signing in. Please try again.",
-        });
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSignInWithGoogle = async () => {
-    setFeedback(null);
-    setIsGoogleLoading(true);
-
-    try {
-      const firebaseResult = await signInWithGoogle();
-
-      if (!firebaseResult.user) {
-        throw new Error("No user information returned from Google");
-      }
-
-      const backendUser = await findUserByFirebaseUid(firebaseResult.user.uid);
-
-      if (backendUser) {
-        router.push(`/users/${backendUser.id}`);
-      } else {
-        router.push("/sign-up");
-      }
-    } catch (error) {
-      console.error("Error during sign-in with Google:", error);
-
-      if (error instanceof ApolloError) {
-        const errorMessage =
-          error.graphQLErrors.length > 0
-            ? error.graphQLErrors[0].message
-            : "Server error occurred. Please try again.";
-
-        setFeedback({
-          severity: "error",
-          message: errorMessage,
-        });
-      } else {
-        setFeedback({
-          severity: "error",
-          message:
-            error instanceof Error
-              ? error.message
-              : "Error signing in with Google. Please try again.",
-        });
-      }
-    } finally {
-      setIsGoogleLoading(false);
-    }
+    if (!validateAllFields()) return;
+    await handleSignIn(formData.email, formData.password);
   };
 
   const handleClickOpen = () => setOpen(true);
@@ -257,7 +114,7 @@ export default function SignIn(props: { disableCustomTheme?: boolean }) {
           )}
           <Box
             component="form"
-            onSubmit={handleSignIn}
+            onSubmit={handleSubmit}
             noValidate
             sx={{
               display: "flex",
