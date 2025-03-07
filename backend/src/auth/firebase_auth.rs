@@ -130,14 +130,16 @@ pub fn require_auth<'a>(
 
 impl<S> FromRequestParts<S> for AuthenticatedUser
 where
-    S: Send + Sync,
+    S: Send + Sync + AsRef<str>,
 {
     type Rejection = (StatusCode, &'static str);
 
     async fn from_request_parts(
         parts: &mut http::request::Parts,
-        _state: &S,
+        state: &S,
     ) -> Result<Self, Self::Rejection> {
+        let firebase_project_id: String = state.as_ref().to_string();
+
         // Get headers
         let headers: &http::HeaderMap = &parts.headers;
 
@@ -180,9 +182,10 @@ where
         // tracing::info!("Successfully fetched decoding key");
 
         // 4. Set up validation
+        let issuer = format!("https://securetoken.google.com/{}", firebase_project_id);
         let mut validation = Validation::new(Algorithm::RS256);
-        validation.set_issuer(&["https://securetoken.google.com/jeopardy-b4166"]);
-        validation.set_audience(&["jeopardy-b4166"]);
+        validation.set_issuer(&[&issuer]);
+        validation.set_audience(&[&firebase_project_id]);
 
         // 5. Decode and verify
         let token_data = match decode::<FirebaseClaims>(token, &decoding_key, &validation) {
@@ -194,14 +197,16 @@ where
         };
 
         // Debugging: Log actual `iss` and `aud` from the token
-        // tracing::info!(
-        //     "Token issuer: {}, expected: https://securetoken.google.com/jeopardy-b4166",
-        //     token_data.claims.iss
-        // );
-        // tracing::info!(
-        //     "Token audience: {}, expected: jeopardy-b4166",
-        //     token_data.claims.aud
-        // );
+        tracing::info!(
+            "Token issuer: {}, expected: {}",
+            token_data.claims.iss,
+            issuer
+        );
+        tracing::info!(
+            "Token audience: {}, expected: {}",
+            token_data.claims.aud,
+            firebase_project_id
+        );
 
         // 6. Check token expiration
         let current_time = std::time::SystemTime::now()

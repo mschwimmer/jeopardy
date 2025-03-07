@@ -9,9 +9,13 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
-  PROJECT_ID: "jeopardy-b4166" # Your Google Cloud project ID
-  REGION: "us-east1" # Your Cloud Run region
-  SERVICE: "backend-image" # Your Cloud Run service name
+  PROJECT_ID: ${{ secrets.CLOUD_RUN_PROJECT_ID }} # Your Google Cloud project ID
+  REGION: ${{ secrets.CLOUD_RUN_REGION }} # Your Cloud Run region
+  SERVICE: ${{ secrets.CLOUD_RUN_SERVICE_NAME }} # Your Cloud Run service name
+  DATABASE_URL: ${{ secrets.DATABASE_URL  }}
+  ALLOWED_ORIGINS: ${{ secrets.ALLOWED_ORIGINS }}
+  FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+  GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
 
 jobs:
   deploy:
@@ -28,7 +32,7 @@ jobs:
         id: "auth"
         uses: "google-github-actions/auth@v2"
         with:
-          credentials_json: "${{ secrets.GCP_CREDENTIALS }}" # Uses stored JSON key
+          credentials_json: "${{ env.GCP_CREDENTIALS }}" # Uses stored JSON key
 
       - name: "Authenticate Docker with Google Cloud"
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
@@ -40,7 +44,7 @@ jobs:
           docker push "${DOCKER_TAG}"
 
       - name: "Debug ALLOWED_ORIGINS"
-        run: printf 'ALLOWED_ORIGINS=%s\n' "${{ secrets.ALLOWED_ORIGINS }}"
+        run: printf 'ALLOWED_ORIGINS=%s\n' "${{ env.ALLOWED_ORIGINS }}"
 
       - name: "Deploy to Cloud Run"
         id: "deploy"
@@ -50,8 +54,9 @@ jobs:
           region: "${{ env.REGION }}"
           image: "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-rust-repo/${{ env.SERVICE }}:${{ github.sha }}"
           env_vars: |-
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            ALLOWED_ORIGINS="${{ secrets.ALLOWED_ORIGINS }}"
+            DATABASE_URL=${{ env.DATABASE_URL }}
+            ALLOWED_ORIGINS="${{ env.ALLOWED_ORIGINS }}"
+            FIREBASE_PROJECT_ID=${{ env.FIREBASE_PROJECT_ID }}
             RUST_LOG=info
 
       - name: "Allow unauthenticated invocations"

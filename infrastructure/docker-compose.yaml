@@ -16,6 +16,7 @@ services:
       dockerfile: backend/Dockerfile.dev
     environment:
       DATABASE_URL: postgres://jeopardy:password@db:5432/jeopardy
+      FIREBASE_PROJECT_ID: jeopardy-b4166
       RUST_LOG: info
     ports:
       - "8080:8080"
