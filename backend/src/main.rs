@@ -36,7 +36,7 @@ async fn graphql_handler(
     let mut request = req.0;
 
     if let Some(user) = auth_user.0 {
-        tracing::info!("Authenticated request from user: {:?}", user);
+        tracing::info!("Authenticated request from user: {}", user.sub());
         request = request.data(user);
     } else {
         tracing::info!("Unauthenticated GraphQL request");
@@ -53,9 +53,17 @@ async fn auth_middleware(
     let (mut parts, body) = request.into_parts();
 
     // If successful, add it to extensions
-    if let Ok(user) = AuthenticatedUser::from_request_parts(&mut parts, &()).await {
-        parts.extensions.insert(user);
+    match AuthenticatedUser::from_request_parts(&mut parts, &()).await {
+        Ok(user) => {
+            // tracing::info!("Authenticated user: {:?}", user);
+            parts.extensions.insert(Some(user)); // Insert Some(user)
+        }
+        Err(err) => {
+            tracing::warn!("Authentication failed: {:?}", err);
+            parts.extensions.insert(None::<AuthenticatedUser>); // Insert None explicitly
+        }
     }
+
     // Reassemble the request with the (possibly updated) parts.
     let request = axum::extract::Request::from_parts(parts, body);
 
@@ -83,6 +91,11 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         // .json() // Uncomment for JSON formatted logs
         .init();
 
+    // tracing::info!("--- Environment Variables ---");
+    // for (key, value) in env::vars() {
+    //     tracing::info!("{} = {}", key, value);
+    // }
+
     // Get Firebase configuration from environment
     let firebase_project_id =
         env::var("FIREBASE_PROJECT_ID").unwrap_or_else(|_| "jeopardy-b4166".to_string());
@@ -96,13 +109,18 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let schema = create_schema(pool);
 
     let default_origin = "http://localhost:3000".to_string();
-    let allowed_origins: Vec<HeaderValue> = env::var("ALLOWED_ORIGINS")
-        .unwrap_or(default_origin)
-        .split(',')
-        .map(|s| s.trim().parse().unwrap())
-        .collect();
-
-    tracing::info!("Allowed origins: {:?}", allowed_origins);
+    let allowed_origins: Vec<HeaderValue> = match env::var("ALLOWED_ORIGINS") {
+        Ok(origins_str) => {
+            tracing::info!("Raw ALLOWED_ORIGINS: {}", origins_str);
+            // Check if the string looks like a JSON array
+            origins_str
+                .split(',')
+                .map(|s| s.trim_matches(|c| c == '\"' || c == '\'').parse().unwrap())
+                .collect()
+        }
+        Err(_) => vec![default_origin.parse().unwrap()],
+    };
+    tracing::info!("Parsed Allowed origins: {:?}", allowed_origins);
 
     // Configure CORS
     let cors = CorsLayer::new()
@@ -119,8 +137,8 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         .route("/graphql", get(graphql_playground).post(graphql_handler))
         .layer(Extension(schema))
         .layer(Extension(app_state))
-        .layer(Extension(None::<AuthenticatedUser>)) // Default empty user
         .layer(axum::middleware::from_fn(auth_middleware)) // Overrides with Some(user) if exists
+        .layer(Extension(None::<AuthenticatedUser>)) // Default empty user
         .layer(cors);
 
     let port = env::var("PORT")

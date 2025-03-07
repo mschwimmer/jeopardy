@@ -38,6 +38,8 @@ impl UserQuery {
             .await
             .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
 
+        tracing::info!("About to look for user with {}", firebase_uid);
+
         User::find_by_firebase_uid(&mut conn, firebase_uid)
             .await
             .map_err(|e| e.into())

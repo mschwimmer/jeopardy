@@ -1,10 +1,7 @@
 use async_graphql::Context;
-use axum::{
-    extract::{FromRequest, FromRequestParts, Request},
-    http::StatusCode,
-};
+use axum::{extract::FromRequestParts, http::StatusCode};
 use jsonwebtoken::jwk::JwkSet;
-use jsonwebtoken::{decode, decode_header, DecodingKey, Validation};
+use jsonwebtoken::{decode, decode_header, Algorithm, DecodingKey, Validation};
 use reqwest;
 use serde::Deserialize;
 use std::sync::LazyLock;
@@ -74,7 +71,7 @@ async fn get_decoding_key_from_jwks(kid: &str) -> Result<DecodingKey, Box<dyn st
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct FirebaseClaims {
-    pub uid: String,
+    pub sub: String, // Firebase uses "sub" as the UID
     pub iss: String,
     pub aud: String,
     pub exp: usize,
@@ -95,9 +92,9 @@ pub struct AuthenticatedUser {
 }
 
 impl AuthenticatedUser {
-    /// firebase uid
-    pub fn uid(&self) -> &str {
-        &self.claims.uid
+    /// firebase sub (user id)
+    pub fn sub(&self) -> &str {
+        &self.claims.sub
     }
 
     // pub fn email(&self) -> Option<&str> {
@@ -116,8 +113,6 @@ impl AuthenticatedUser {
     pub fn claims(&self) -> &FirebaseClaims {
         &self.claims
     }
-
-    // TODO add function to return backend user ID
 }
 
 /// Returns authenticated user if exists, None otherwise
@@ -131,73 +126,6 @@ pub fn require_auth<'a>(
 ) -> Result<&'a AuthenticatedUser, async_graphql::Error> {
     ctx.data::<AuthenticatedUser>()
         .map_err(|_| async_graphql::Error::new("Authentication required"))
-}
-
-impl<S> FromRequest<S> for AuthenticatedUser
-where
-    S: Send + Sync,
-{
-    type Rejection = (StatusCode, &'static str);
-
-    async fn from_request(req: Request, _state: &S) -> Result<Self, Self::Rejection> {
-        // Get headers
-        let headers = req.headers();
-
-        // 1. Extract the token from the Authorization header
-        let auth_header = headers
-            .get("Authorization")
-            .ok_or((StatusCode::UNAUTHORIZED, "Missing Authorization header"))?;
-
-        let auth_str = auth_header.to_str().map_err(|_| {
-            (
-                StatusCode::UNAUTHORIZED,
-                "Invalid Authorization header format",
-            )
-        })?;
-
-        let token = auth_str
-            .strip_prefix("Bearer ")
-            .ok_or((StatusCode::UNAUTHORIZED, "Missing Bearer prefix"))?;
-
-        // 2. Decode the token header to extract the kid
-        let header = decode_header(token)
-            .map_err(|_| (StatusCode::UNAUTHORIZED, "Failed to decode token header"))?;
-
-        let kid = header
-            .kid
-            .ok_or((StatusCode::UNAUTHORIZED, "Missing kid in token header"))?;
-
-        // 3. Get decoding key
-        let decoding_key = match get_decoding_key_from_jwks(&kid).await {
-            Ok(key) => key,
-            Err(_) => return Err((StatusCode::UNAUTHORIZED, "Failed to fetch decoding key")),
-        };
-
-        // 4. Set up validation
-        let mut validation = Validation::default();
-        validation.set_issuer(&["https://securetoken.google.com/jeopardy-b4166"]);
-        validation.set_audience(&["jeopardy-b4166"]);
-
-        // 5. Decode and verify
-        let token_data = match decode::<FirebaseClaims>(token, &decoding_key, &validation) {
-            Ok(data) => data,
-            Err(_) => return Err((StatusCode::UNAUTHORIZED, "Token verification failed")),
-        };
-
-        // 6. Check token expiration
-        let current_time = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Clock error"))?
-            .as_secs() as usize;
-
-        if token_data.claims.exp < current_time {
-            return Err((StatusCode::UNAUTHORIZED, "Token expired"));
-        }
-
-        Ok(AuthenticatedUser {
-            claims: token_data.claims,
-        })
-    }
 }
 
 impl<S> FromRequestParts<S> for AuthenticatedUser
@@ -218,6 +146,8 @@ where
             .get("Authorization")
             .ok_or((StatusCode::UNAUTHORIZED, "Missing Authorization header"))?;
 
+        // tracing::info!("Auth Header: {:?}", auth_header);
+
         let auth_str = auth_header.to_str().map_err(|_| {
             (
                 StatusCode::UNAUTHORIZED,
@@ -229,6 +159,8 @@ where
             .strip_prefix("Bearer ")
             .ok_or((StatusCode::UNAUTHORIZED, "Missing Bearer prefix"))?;
 
+        // tracing::info!("Extracted token: {}", &token[..30]);
+
         // 2. Decode the token header to extract the kid
         let header = decode_header(token)
             .map_err(|_| (StatusCode::UNAUTHORIZED, "Failed to decode token header"))?;
@@ -237,22 +169,39 @@ where
             .kid
             .ok_or((StatusCode::UNAUTHORIZED, "Missing kid in token header"))?;
 
+        // tracing::info!("Extracted kid: {}", kid);
+
         // 3. Get decoding key
         let decoding_key = match get_decoding_key_from_jwks(&kid).await {
             Ok(key) => key,
             Err(_) => return Err((StatusCode::UNAUTHORIZED, "Failed to fetch decoding key")),
         };
 
+        // tracing::info!("Successfully fetched decoding key");
+
         // 4. Set up validation
-        let mut validation = Validation::default();
+        let mut validation = Validation::new(Algorithm::RS256);
         validation.set_issuer(&["https://securetoken.google.com/jeopardy-b4166"]);
         validation.set_audience(&["jeopardy-b4166"]);
 
         // 5. Decode and verify
         let token_data = match decode::<FirebaseClaims>(token, &decoding_key, &validation) {
             Ok(data) => data,
-            Err(_) => return Err((StatusCode::UNAUTHORIZED, "Token verification failed")),
+            Err(e) => {
+                tracing::error!("Token verification failed: {:?}", e);
+                return Err((StatusCode::UNAUTHORIZED, "Token verification failed"));
+            }
         };
+
+        // Debugging: Log actual `iss` and `aud` from the token
+        // tracing::info!(
+        //     "Token issuer: {}, expected: https://securetoken.google.com/jeopardy-b4166",
+        //     token_data.claims.iss
+        // );
+        // tracing::info!(
+        //     "Token audience: {}, expected: jeopardy-b4166",
+        //     token_data.claims.aud
+        // );
 
         // 6. Check token expiration
         let current_time = std::time::SystemTime::now()
@@ -263,6 +212,8 @@ where
         if token_data.claims.exp < current_time {
             return Err((StatusCode::UNAUTHORIZED, "Token expired"));
         }
+
+        // tracing::info!("Created AuthenticatedUser with claims :)");
 
         Ok(AuthenticatedUser {
             claims: token_data.claims,

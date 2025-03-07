@@ -1,8 +1,10 @@
 "use client";
 import * as React from "react";
 import Box from "@mui/material/Box";
+import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import CssBaseline from "@mui/material/CssBaseline";
+import CircularProgress from "@mui/material/CircularProgress";
 import Divider from "@mui/material/Divider";
 import FormLabel from "@mui/material/FormLabel";
 import FormControl from "@mui/material/FormControl";
@@ -14,7 +16,7 @@ import MuiCard from "@mui/material/Card";
 import { styled } from "@mui/material/styles";
 import AppTheme from "../shared-theme/AppTheme";
 import { GoogleIcon, DogIcon } from "./components/CustomIcons";
-
+import type {} from "@mui/material/themeCssVarsAugmentation";
 import { ApolloError } from "@apollo/client";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../lib/AuthProvider";
@@ -65,91 +67,147 @@ const SignUpContainer = styled(Stack)(({ theme }) => ({
 }));
 
 export default function SignUp(props: { disableCustomTheme?: boolean }) {
-  const [emailError, setEmailError] = React.useState(false);
-  const [emailErrorMessage, setEmailErrorMessage] = React.useState("");
-  const [passwordError, setPasswordError] = React.useState(false);
-  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState("");
-  const [usernameError, setUsernameError] = React.useState(false);
-  const [usernameErrorMessage, setUsernameErrorMessage] = React.useState("");
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
+  const [generalError, setGeneralError] = React.useState("");
+
+  const [formData, setFormData] = React.useState({
+    username: "",
+    email: "",
+    password: "",
+  });
+
+  const [formErrors, setFormErrors] = React.useState({
+    username: { error: false, message: "" },
+    email: { error: false, message: "" },
+    password: { error: false, message: "" },
+  });
+
   const { signUp, signInWithGoogle } = useAuth();
   const router = useRouter();
 
-  const validateInputs = () => {
-    const email = document.getElementById("email") as HTMLInputElement;
-    const password = document.getElementById("password") as HTMLInputElement;
-    const username = document.getElementById("username") as HTMLInputElement;
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
 
-    let isValid = true;
+    // Real-time validation
+    validateField(name, value);
+  };
 
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-      setEmailError(true);
-      setEmailErrorMessage("Please enter a valid email address.");
-      isValid = false;
-    } else {
-      setEmailError(false);
-      setEmailErrorMessage("");
+  const validateField = (name: string, value: string) => {
+    const newErrors = { ...formErrors };
+
+    switch (name) {
+      case "email":
+        if (!value) {
+          newErrors.email = { error: true, message: "Email is required." };
+        } else if (!/\S+@\S+\.\S+/.test(value)) {
+          newErrors.email = {
+            error: true,
+            message: "Please enter a valid email address.",
+          };
+        } else {
+          newErrors.email = { error: false, message: "" };
+        }
+        break;
+      case "password":
+        if (!value) {
+          newErrors.password = {
+            error: true,
+            message: "Password is required.",
+          };
+        } else if (value.length < 6) {
+          newErrors.password = {
+            error: true,
+            message: "Password must be at least 6 characters long.",
+          };
+        } else {
+          newErrors.password = { error: false, message: "" };
+        }
+        break;
+      case "username":
+        if (!value) {
+          newErrors.username = {
+            error: true,
+            message: "Username is required.",
+          };
+        } else {
+          newErrors.username = { error: false, message: "" };
+        }
+        break;
     }
+    setFormErrors(newErrors);
+  };
 
-    if (!password.value || password.value.length < 6) {
-      setPasswordError(true);
-      setPasswordErrorMessage("Password must be at least 6 characters long.");
-      isValid = false;
-    } else {
-      setPasswordError(false);
-      setPasswordErrorMessage("");
-    }
+  const validateAllFields = () => {
+    validateField("username", formData.username);
+    validateField("email", formData.email);
+    validateField("password", formData.password);
 
-    if (!username.value || username.value.length < 1) {
-      setUsernameError(true);
-      setUsernameErrorMessage("Username is required.");
-      isValid = false;
-    } else {
-      setUsernameError(false);
-      setUsernameErrorMessage("");
-    }
-
-    return isValid;
+    return !(
+      formErrors.username.error ||
+      formErrors.email.error ||
+      formErrors.password.error
+    );
   };
 
   const handleSignUp = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (usernameError || emailError || passwordError) {
+    setGeneralError("");
+
+    if (!validateAllFields()) {
       return;
     }
-    const data = new FormData(event.currentTarget);
-    const email = data.get("email") as string;
-    const password = data.get("password") as string;
-    const username = data.get("username") as string;
+
+    setIsLoading(true);
 
     try {
       // console.log("Attempting to sign up with email:", email);
-      const userCredential = await signUp(email, password);
+      const userCredential = await signUp(formData.email, formData.password);
       // console.log("Firebase sign up successful:", userCredential);
       const firebaseUser = userCredential.user;
       // const idToken = await firebaseUser.getIdToken();
 
       // Send the user data to the server
-      const response = await createUser(username, firebaseUser.uid);
+      const response = await createUser(formData.username, firebaseUser.uid);
       // console.log("Backend createUser response:", response);
       router.push("/users/" + response.data?.createUser.id);
     } catch (error) {
       console.error("Error during Firebase sign up:", error);
+      // Special handling for ApolloError
+      if (error instanceof ApolloError) {
+        // Extract the first GraphQL error message if available
+        const errorMessage =
+          error.graphQLErrors.length > 0
+            ? error.graphQLErrors[0].message
+            : "Server error occurred. Please try again.";
+
+        setGeneralError(errorMessage);
+      } else {
+        setGeneralError(
+          error instanceof Error
+            ? error.message
+            : "Failed to create account. Please try again."
+        );
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleSignUpWithGoogle = async () => {
+    setGeneralError("");
+    setIsGoogleLoading(true);
+
     // Sign up new user with google
     try {
       const result = await signInWithGoogle();
       if (!result.user) {
-        console.error("[SignUpWithGoogle] No Google user returned:", result);
-        return;
+        throw new Error("No user returned from Google sign-up.");
       }
-      console.log("User signed up with Google:", result.user);
-
-      console.log(
-        `[SignUpWithGoogle] Checking for existing gUser in db with UID: ${result.user.uid}`
-      );
 
       // First check for existing user with firebase UID
       const existingUser = await findUserByFirebaseUid(result.user.uid);
@@ -159,41 +217,39 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
           existingUser
         );
         router.push(`/users/${existingUser.id}`);
+        return;
       }
-
-      console.log(
-        `[SignUpWithGoogle] No existing gUser found in db. Creating new user for UID: ${result.user.uid}`
-      );
 
       // If no existing user, create a new user
       const displayName = result.user.displayName ?? "Display Name";
-      console.log("[SignUpWithGoogle] Using display name:", displayName);
+
       const userResult = await createUser(displayName, result.user.uid);
-      if (userResult.id) {
-        console.log(
-          "[SignUpWithGoogle] User successfully created with id:",
-          userResult.id
-        );
+      if (userResult?.id) {
         router.push(`/users/${userResult.id}`);
       } else {
-        console.error(
-          "[SignUpWithGoogle] User creation did not return a valid id:",
-          userResult
-        );
+        throw new Error("Failed to create user account");
       }
     } catch (error) {
-      console.error(
-        "[SignUpWithGoogle] Error during sign-up with Google:",
-        error
-      );
-      // If the error is an ApolloError, log more detailed info:
+      console.error("Error during sign-up with Google:", error);
+
+      // Special handling for ApolloError
       if (error instanceof ApolloError) {
-        console.error(
-          "[SignUpWithGoogle] GraphQL errors:",
-          error.graphQLErrors
+        // Extract the first GraphQL error message if available
+        const errorMessage =
+          error.graphQLErrors.length > 0
+            ? error.graphQLErrors[0].message
+            : "Server error occurred. Please try again.";
+
+        setGeneralError(errorMessage);
+      } else {
+        setGeneralError(
+          error instanceof Error
+            ? error.message
+            : "Google sign up failed. Please try again or use email."
         );
-        console.error("[SignUpWithGoogle] Network error:", error.networkError);
       }
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -210,6 +266,13 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
           >
             Sign up
           </Typography>
+
+          {generalError && (
+            <Alert severity="error" sx={{ width: "100%" }}>
+              {generalError}
+            </Alert>
+          )}
+
           <Box
             component="form"
             method="post"
@@ -225,9 +288,11 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
                 fullWidth
                 id="username"
                 placeholder="Jon Snow"
-                error={usernameError}
-                helperText={usernameErrorMessage}
-                color={usernameError ? "error" : "primary"}
+                value={formData.username}
+                onChange={handleInputChange}
+                error={formErrors.username.error}
+                helperText={formErrors.username.message}
+                color={formErrors.username.error ? "error" : "primary"}
               />
             </FormControl>
             <FormControl>
@@ -240,9 +305,11 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
                 name="email"
                 autoComplete="email"
                 variant="outlined"
-                error={emailError}
-                helperText={emailErrorMessage}
-                color={passwordError ? "error" : "primary"}
+                value={formData.email}
+                onChange={handleInputChange}
+                error={formErrors.email.error}
+                helperText={formErrors.email.message}
+                color={formErrors.email.error ? "error" : "primary"}
               />
             </FormControl>
             <FormControl>
@@ -256,18 +323,34 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
                 id="password"
                 autoComplete="new-password"
                 variant="outlined"
-                error={passwordError}
-                helperText={passwordErrorMessage}
-                color={passwordError ? "error" : "primary"}
+                value={formData.password}
+                onChange={handleInputChange}
+                error={formErrors.password.error}
+                helperText={formErrors.password.message}
+                color={formErrors.password.error ? "error" : "primary"}
               />
             </FormControl>
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              onClick={validateInputs}
+              disabled={isLoading}
+              sx={{ position: "relative" }}
             >
-              Sign up
+              {isLoading ? (
+                <>
+                  <CircularProgress
+                    size={40}
+                    sx={{
+                      position: "absolute",
+                      color: "primary.light",
+                    }}
+                  />
+                  Creating account...
+                </>
+              ) : (
+                "Sign up"
+              )}
             </Button>
           </Box>
           <Divider>
@@ -278,9 +361,24 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
               fullWidth
               variant="outlined"
               onClick={handleSignUpWithGoogle}
-              startIcon={<GoogleIcon />}
+              startIcon={isGoogleLoading ? null : <GoogleIcon />}
+              disabled={isGoogleLoading}
+              sx={{ position: "relative" }}
             >
-              Sign up with Google
+              {isGoogleLoading ? (
+                <>
+                  <CircularProgress
+                    size={40}
+                    sx={{
+                      position: "absolute",
+                      color: "primary.light",
+                    }}
+                  />
+                  Connecting to Google...
+                </>
+              ) : (
+                "Sign up with Google"
+              )}
             </Button>
             <Typography sx={{ textAlign: "center" }}>
               Already have an account?{" "}

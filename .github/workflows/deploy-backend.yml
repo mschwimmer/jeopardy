@@ -14,19 +14,8 @@ env:
   SERVICE: "backend-image" # Your Cloud Run service name
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1 # Only fetch the latest commit (faster)
-      - name: Build
-        run: cargo build --verbose --release
-
   deploy:
     runs-on: ubuntu-latest
-    needs: build
 
     permissions:
       contents: "read"
@@ -50,6 +39,9 @@ jobs:
           docker build --tag "${DOCKER_TAG}" -f backend/Dockerfile .
           docker push "${DOCKER_TAG}"
 
+      - name: "Debug ALLOWED_ORIGINS"
+        run: printf 'ALLOWED_ORIGINS=%s\n' "${{ secrets.ALLOWED_ORIGINS }}"
+
       - name: "Deploy to Cloud Run"
         id: "deploy"
         uses: "google-github-actions/deploy-cloudrun@v2"
@@ -59,7 +51,7 @@ jobs:
           image: "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/docker-rust-repo/${{ env.SERVICE }}:${{ github.sha }}"
           env_vars: |-
             DATABASE_URL=${{ secrets.DATABASE_URL }}
-            ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}
+            ALLOWED_ORIGINS="${{ secrets.ALLOWED_ORIGINS }}"
             RUST_LOG=info
 
       - name: "Allow unauthenticated invocations"

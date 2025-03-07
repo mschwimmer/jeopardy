@@ -66,10 +66,10 @@ impl QuestionMutation {
         let auth_user = require_auth(ctx)?;
 
         // Use user info
-        println!("Request from firebase user: {}", auth_user.uid());
+        tracing::info!("Request from firebase user: {}", auth_user.sub());
 
         // Fetch backend User info
-        let requestor = User::find_by_firebase_uid(&mut conn, auth_user.uid().to_string())
+        let requestor = User::find_by_firebase_uid(&mut conn, auth_user.sub().to_string())
             .await
             .map_err(|e| async_graphql::Error::new(format!("Database error: {:?}", e)))?
             .ok_or_else(|| async_graphql::Error::new("Backend user not found"))?;
@@ -81,6 +81,11 @@ impl QuestionMutation {
 
         // requestor must be author of question
         if requestor.id != existing_question.user_id {
+            tracing::info!(
+                "MISMATCH Requestor: {} | Question Author: {}",
+                requestor.id,
+                existing_question.user_id
+            );
             return Err(async_graphql::Error::new(
                 "Requestor did not match question author",
             ));
@@ -107,6 +112,8 @@ impl QuestionMutation {
 
         // Perform the update
         let updated = Question::update_question(&mut conn, input.id, updated_fields).await?;
+
+        tracing::info!("Updated question: {:?}", updated);
 
         Ok(updated)
     }

@@ -1,34 +1,37 @@
 ARG TARGETPLATFORM=linux/amd64
 
-# Stage 1: Build the application
-FROM --platform=$TARGETPLATFORM rust AS builder
+# Stage 0: Prepare cargo-chef
+FROM --platform=$TARGETPLATFORM rust:slim AS chef
 WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    pkg-config \
+    libssl-dev \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/* \
+    && cargo install cargo-chef
 
-# Copy the workspace manifest and lockfile
-COPY Cargo.toml Cargo.lock ./
-# Also copy the backend manifest file
-COPY backend/Cargo.toml backend/
+# Stage 1: Create a recipe file
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
 
-# Create a dummy main file so that dependencies can be compiled
-RUN mkdir -p backend/src && echo "fn main() {}" > backend/src/main.rs
-RUN cargo build --release --bin backend
-RUN rm -f backend/src/main.rs
+# Stage 2: Build dependencies
+FROM chef AS builder
+COPY --from=planner /app/recipe.json recipe.json
+# Build dependencies - this is the key step that will be cached
+RUN cargo chef cook --release --recipe-path recipe.json
 
-# Copy the full source code and rebuild the binary
+# Stage 3: Build the application
 COPY . .
 RUN cargo build --release --bin backend
 
-# Stage 2: Create a minimal runtime container
+# Stage 4: Create a minimal runtime container
 FROM --platform=$TARGETPLATFORM debian:stable-slim
-# Install libpq, which provides libpq.so.5
-RUN apt-get update && apt-get install -y libpq5 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
-
-# Copy the compiled binary from the builder stage
 COPY --from=builder /app/target/release/backend .
-
-# Expose the port your app listens on (adjust if necessary)
 EXPOSE 8080
-
-# Run the binary
 CMD ["./backend"]
