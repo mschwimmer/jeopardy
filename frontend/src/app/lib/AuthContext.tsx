@@ -10,6 +10,7 @@ interface AuthContextType {
   user: User | null;
   backendUser: BackendUser | null;
   loading: boolean;
+  loadingBackendUser: boolean;
   signUp: (email: string, password: string) => Promise<UserCredential>;
   signIn: (email: string, password: string) => Promise<UserCredential>;
   signInWithGoogle: () => Promise<UserCredential>;

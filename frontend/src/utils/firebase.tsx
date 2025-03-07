@@ -1,6 +1,5 @@
 "use client";
 // src/firebase.ts
-// TODO: Create a Firebase project and add the configuration here
 
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth } from "firebase/auth";
@@ -16,7 +15,7 @@ const firebaseConfig = {
 };
 
 // initialize firebase app
-const fireBaseApp =
+export const fireBaseApp =
   getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
 // initialize Firebase Authentication
