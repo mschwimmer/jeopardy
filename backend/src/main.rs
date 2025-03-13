@@ -1,8 +1,12 @@
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
-use axum::extract::FromRequestParts;
 use axum::response::IntoResponse;
-use axum::{extract::Extension, response::Html, routing::get, Router};
+use axum::{
+    extract::{Extension, FromRequestParts, State},
+    response::Html,
+    routing::get,
+    Router,
+};
 use backend::auth::firebase_auth::AuthenticatedUser;
 use backend::db::pool::create_app_pool;
 use backend::graphql::schema::{create_schema, AppSchema};
@@ -46,14 +50,18 @@ async fn graphql_handler(
 }
 
 async fn auth_middleware(
+    State(firebase_project_id): State<String>,
     request: axum::extract::Request,
     next: axum::middleware::Next,
 ) -> impl IntoResponse {
     // Split request into parts
     let (mut parts, body) = request.into_parts();
 
+    tracing::info!("Auth middleware");
+    tracing::info!("Firebase project ID: {}", firebase_project_id);
+
     // If successful, add it to extensions
-    match AuthenticatedUser::from_request_parts(&mut parts, &()).await {
+    match AuthenticatedUser::from_request_parts(&mut parts, &firebase_project_id).await {
         Ok(user) => {
             // tracing::info!("Authenticated user: {:?}", user);
             parts.extensions.insert(Some(user)); // Insert Some(user)
@@ -136,9 +144,12 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         .route("/", get(root_handler))
         .route("/graphql", get(graphql_playground).post(graphql_handler))
         .layer(Extension(schema))
-        .layer(Extension(app_state))
-        .layer(axum::middleware::from_fn(auth_middleware)) // Overrides with Some(user) if exists
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.clone(),
+            auth_middleware,
+        )) // Overrides with Some(user) if exists
         .layer(Extension(None::<AuthenticatedUser>)) // Default empty user
+        .with_state(app_state)
         .layer(cors);
 
     let port = env::var("PORT")
