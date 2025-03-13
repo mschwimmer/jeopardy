@@ -2,7 +2,7 @@
 
 use crate::db::schema::questions;
 use crate::models::user::User;
-use async_graphql::SimpleObject;
+use async_graphql::{ComplexObject, SimpleObject};
 use chrono::{DateTime, Utc};
 use derive_builder::Builder;
 use diesel::prelude::*;
@@ -18,6 +18,7 @@ use diesel_async::{AsyncPgConnection, RunQueryDsl};
 )]
 #[diesel(table_name = questions)]
 #[diesel(belongs_to(User))]
+#[graphql(complex)]
 pub struct Question {
     /// The unique identifier for the question.
     pub id: i64,
@@ -166,5 +167,25 @@ impl Question {
         diesel::delete(questions::table.filter(questions::id.eq(question_id)))
             .execute(conn)
             .await
+    }
+}
+
+#[ComplexObject]
+impl Question {
+    pub async fn user(&self, ctx: &async_graphql::Context<'_>) -> Result<User, async_graphql::Error> {
+        let pool = ctx.data::<crate::db::pool::DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
+        })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
+        let user = User::find_by_id(&mut conn, self.user_id)
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to load user: {}", e)))?;
+
+        user.ok_or_else(|| {
+            async_graphql::Error::new("Data integrity error: Question has invalid user_id")
+        })
     }
 }

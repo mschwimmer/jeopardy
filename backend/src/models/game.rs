@@ -1,8 +1,10 @@
 // models/game.rs
 
+use crate::db::pool::DBPool;
 use crate::db::schema::games;
+use crate::models::game_board::GameBoard;
 use crate::models::user::User;
-use async_graphql::SimpleObject;
+use async_graphql::{ComplexObject, SimpleObject};
 use chrono::{DateTime, Utc};
 use derive_builder::Builder;
 use diesel::prelude::*;
@@ -18,6 +20,7 @@ use diesel_async::{AsyncPgConnection, RunQueryDsl};
 )]
 #[diesel(table_name = games)]
 #[diesel(belongs_to(User))]
+#[graphql(complex)]
 pub struct Game {
     pub id: i64,
     pub created_at: DateTime<Utc>,
@@ -95,5 +98,44 @@ impl Game {
             .values(&new_game)
             .get_result(conn)
             .await
+    }
+}
+
+#[ComplexObject]
+impl Game {
+    pub async fn game_board(
+        &self,
+        ctx: &async_graphql::Context<'_>,
+    ) -> Result<GameBoard, async_graphql::Error> {
+        let pool = ctx.data::<DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
+        })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
+        GameBoard::find_by_id(&mut conn, self.game_board_id)
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to load game board: {}", e)))
+    }
+
+    pub async fn user(
+        &self,
+        ctx: &async_graphql::Context<'_>,
+    ) -> Result<User, async_graphql::Error> {
+        let pool = ctx.data::<DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
+        })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
+        let user = User::find_by_id(&mut conn, self.user_id)
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to load user: {}", e)))?;
+
+        user.ok_or_else(|| {
+            async_graphql::Error::new("Data integrity error: game references non-existent user")
+        })
     }
 }

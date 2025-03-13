@@ -1,8 +1,9 @@
 // models/game_board.rs
 
+use crate::db::pool::DBPool;
 use crate::db::schema::game_boards;
 use crate::models::user::User;
-use async_graphql::SimpleObject;
+use async_graphql::{ComplexObject, SimpleObject};
 use chrono::{DateTime, Utc};
 use derive_builder::Builder;
 use diesel::prelude::*;
@@ -19,6 +20,7 @@ use diesel_async::{AsyncPgConnection, RunQueryDsl};
 )]
 #[diesel(table_name = game_boards)]
 #[diesel(belongs_to(User))]
+#[graphql(complex)]
 pub struct GameBoard {
     /// The unique identifier for the game board.
     pub id: i64,
@@ -161,5 +163,27 @@ impl GameBoard {
             .set(game_boards::categories.eq(game_board.categories))
             .get_result::<Self>(conn)
             .await
+    }
+}
+
+#[ComplexObject]
+impl GameBoard {
+    pub async fn user(
+        &self,
+        ctx: &async_graphql::Context<'_>,
+    ) -> Result<User, async_graphql::Error> {
+        let pool = ctx.data::<DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
+        })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
+
+        let user = User::find_by_id(&mut conn, self.user_id).await?;
+
+        user.ok_or_else(|| {
+            async_graphql::Error::new("Data integrity error: GameBoard has invalid user_id")
+        })
     }
 }
