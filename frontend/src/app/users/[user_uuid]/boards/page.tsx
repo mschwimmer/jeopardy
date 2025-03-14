@@ -1,18 +1,10 @@
 import styles from "../../../styles/common.module.css";
 import pageStyles from "./page.module.css";
-import UserGameBoardDashboard from "../UserGameBoardDashboard";
 
-export default async function BoardsPage({
-  params,
-}: {
-  params: Promise<{ user_uuid: string }>;
-}) {
-  const { user_uuid } = await params;
+export default async function BoardsPage() {
   return (
     <div className={`${pageStyles.page} ${styles.page}`}>
-      <main className={styles.main}>
-        <UserGameBoardDashboard userId={user_uuid} />
-      </main>
+      <main className={styles.main}></main>
     </div>
   );
 }

@@ -3,12 +3,15 @@
 import { List, ListItem } from "@mui/material";
 import styles from "../../styles/common.module.css";
 import pageStyles from "./page.module.css";
-import UserGameBoardDashboard from "./UserGameBoardDashboard";
+import { UserGameBoardDashboard } from "./UserGameBoardDashboard";
 import { NewGameBoard } from "./NewGameBoard";
 import { UserGamesDasboard } from "./UserGamesDasboard";
 import UserCard from "./UserCard";
-import { Game } from "@/__generated__/types";
-import { fetchGamesFromUser } from "@/app/lib/serverQueries";
+import { Game, GameBoard } from "@/__generated__/types";
+import {
+  fetchGamesFromUser,
+  fetchGameBoardsFromUser,
+} from "@/app/lib/serverQueries";
 
 export default async function UserPage({
   params,
@@ -17,6 +20,9 @@ export default async function UserPage({
 }) {
   const { user_uuid } = await params;
   const games: Game[] = await fetchGamesFromUser(parseInt(user_uuid, 10));
+  const boards: GameBoard[] = await fetchGameBoardsFromUser(
+    parseInt(user_uuid, 10)
+  );
 
   return (
     <div className={`${pageStyles.page} ${styles.page}`}>
@@ -30,7 +36,7 @@ export default async function UserPage({
             <NewGameBoard user_uuid={user_uuid} />
           </ListItem>
           <ListItem>
-            <UserGameBoardDashboard userId={user_uuid} />
+            <UserGameBoardDashboard boards={boards} />
           </ListItem>
           <ListItem>
             <UserGamesDasboard games={games} />

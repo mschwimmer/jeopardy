@@ -42,7 +42,7 @@ export const UserGamesDasboard: React.FC<UserGamesDasboardProps> = ({
             },
             {
               field: "createdAt",
-              headerName: "Created At",
+              headerName: "Created",
               width: 100,
               valueFormatter: (value: Date) =>
                 new Date(value).toLocaleDateString(),

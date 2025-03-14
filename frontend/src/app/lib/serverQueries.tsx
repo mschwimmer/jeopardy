@@ -151,3 +151,33 @@ export async function fetchGamesFromUser(userId: number) {
 
   return data.fetchGamesFromUser;
 }
+
+export const PLAYER_GAMEBOARDS_QUERY = gql`
+  query FetchGameBoardsFromUser($userId: Int!) {
+    fetchGameBoardsFromUser(userId: $userId) {
+      id
+      createdAt
+      updatedAt
+      userId
+      user {
+        id
+        createdAt
+        updatedAt
+        firebaseUid
+        username
+      }
+      title
+      categories
+    }
+  }
+`;
+
+export async function fetchGameBoardsFromUser(userId: number) {
+  const { data } = await client.query({
+    query: PLAYER_GAMEBOARDS_QUERY,
+    variables: { userId },
+    fetchPolicy: "network-only",
+  });
+
+  return data.fetchGameBoardsFromUser;
+}
