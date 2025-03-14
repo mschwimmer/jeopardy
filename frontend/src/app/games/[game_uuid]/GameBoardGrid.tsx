@@ -1,7 +1,7 @@
 // src/app/games/[game_uuid]/GameBoardGrid.tsx
 
 "use client";
-import { GameBoard, GameBoardQuestion } from "@/__generated__/graphql";
+import { GameBoard, GameBoardQuestion } from "@/__generated__/types";
 import { useFetchGbQsQuery } from "@/__generated__/graphql";
 import { ReactElement, useMemo, useState } from "react";
 import QueryResult from "@/app/components/query-result";

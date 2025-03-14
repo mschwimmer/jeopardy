@@ -598,7 +598,7 @@ export type FetchGbQsQueryVariables = Exact<{
 }>;
 
 
-export type FetchGbQsQuery = { __typename?: 'RootQuery', fetchGameBoardQuestions: Array<{ __typename?: 'GameBoardQuestion', mapping: { __typename?: 'GameBoardQuestionMapping', boardId: number, questionId: number, dailyDouble: boolean, points: number, gridRow: number, gridCol: number }, question: { __typename?: 'Question', id: number, createdAt: any, updatedAt: any, userId: number, question: string, answer: string } }> };
+export type FetchGbQsQuery = { __typename?: 'RootQuery', fetchGameBoardQuestions: Array<{ __typename?: 'GameBoardQuestion', mapping: { __typename?: 'GameBoardQuestionMapping', boardId: number, questionId: number, dailyDouble: boolean, points: number, gridRow: number, gridCol: number }, question: { __typename?: 'Question', id: number, createdAt: any, updatedAt: any, userId: number, question: string, answer: string, user: { __typename?: 'User', id: number, createdAt: any, updatedAt: any, firebaseUid: string, username: string } } }> };
 
 export type FindGameBoardMappingQueryVariables = Exact<{
   gameBoardId: Scalars['Int']['input'];
@@ -1295,6 +1295,13 @@ export const FetchGbQsDocument = gql`
       createdAt
       updatedAt
       userId
+      user {
+        id
+        createdAt
+        updatedAt
+        firebaseUid
+        username
+      }
       question
       answer
     }

@@ -33,6 +33,13 @@ export const ALL_GBQ_QUERY = gql`
         createdAt
         updatedAt
         userId
+        user {
+          id
+          createdAt
+          updatedAt
+          firebaseUid
+          username
+        }
         question
         answer
       }
