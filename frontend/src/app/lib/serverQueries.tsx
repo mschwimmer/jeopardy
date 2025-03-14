@@ -125,3 +125,29 @@ export async function fetchAllGameBoards() {
   });
   return data.fetchAllGameBoards;
 }
+
+export const PLAYER_GAMES_QUERY = gql`
+  query FetchGamesFromUser($userId: Int!) {
+    fetchGamesFromUser(userId: $userId) {
+      id
+      createdAt
+      updatedAt
+      userId
+      gameBoardId
+      gameBoard {
+        title
+        categories
+      }
+    }
+  }
+`;
+
+export async function fetchGamesFromUser(userId: number) {
+  const { data } = await client.query({
+    query: PLAYER_GAMES_QUERY,
+    variables: { userId },
+    fetchPolicy: "network-only",
+  });
+
+  return data.fetchGamesFromUser;
+}

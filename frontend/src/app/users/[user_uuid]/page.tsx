@@ -7,6 +7,8 @@ import UserGameBoardDashboard from "./UserGameBoardDashboard";
 import { NewGameBoard } from "./NewGameBoard";
 import { UserGamesDasboard } from "./UserGamesDasboard";
 import UserCard from "./UserCard";
+import { Game } from "@/__generated__/types";
+import { fetchGamesFromUser } from "@/app/lib/serverQueries";
 
 export default async function UserPage({
   params,
@@ -14,7 +16,8 @@ export default async function UserPage({
   params: Promise<{ user_uuid: string }>;
 }) {
   const { user_uuid } = await params;
-  // console.log("user_uuid in UserPage:", user_uuid);
+  const games: Game[] = await fetchGamesFromUser(parseInt(user_uuid, 10));
+
   return (
     <div className={`${pageStyles.page} ${styles.page}`}>
       <main className={styles.main}>
@@ -30,7 +33,7 @@ export default async function UserPage({
             <UserGameBoardDashboard userId={user_uuid} />
           </ListItem>
           <ListItem>
-            <UserGamesDasboard user_uuid={user_uuid} />
+            <UserGamesDasboard games={games} />
           </ListItem>
         </List>
       </main>

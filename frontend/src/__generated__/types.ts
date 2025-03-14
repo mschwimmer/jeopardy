@@ -60,9 +60,11 @@ export type CreateUserInput = {
 export type Game = {
   __typename?: 'Game';
   createdAt: Scalars['DateTime']['output'];
+  gameBoard: GameBoard;
   gameBoardId: Scalars['Int']['output'];
   id: Scalars['Int']['output'];
   updatedAt: Scalars['DateTime']['output'];
+  user: User;
   userId: Scalars['Int']['output'];
 };
 
@@ -89,6 +91,7 @@ export type GameBoard = {
   title: Scalars['String']['output'];
   /** The timestamp when the game board record was last updated. */
   updatedAt: Scalars['DateTime']['output'];
+  user: User;
   /** The unique identifier of the user who created the game board. */
   userId: Scalars['Int']['output'];
 };
@@ -100,7 +103,7 @@ export type GameBoard = {
  *
  * GBQ := GBQMapping + Question.
  * # Example
- * ```rust
+ * ```rust, ignore
  * use crate::models::{GameBoardQuestion, GBQMapping, Question};
  * use chrono::Utc;
  *
@@ -140,7 +143,7 @@ export type GameBoardQuestion = {
  * along with additional metadata such as the position of the question
  * on the grid, points, and whether it's a daily double.
  * # Example
- * ```rust
+ * ```rust, ignore
  * let mapping = GBQMapping {
  * board_id: 1,
  * question_id: 42,
@@ -197,6 +200,7 @@ export type Question = {
   question: Scalars['String']['output'];
   /** The timestamp when the question was last updated. */
   updatedAt: Scalars['DateTime']['output'];
+  user: User;
   /** The unique identifier of the user who created the question. */
   userId: Scalars['Int']['output'];
 };
@@ -336,9 +340,9 @@ export type RootQuery = {
   /** Find a single question by id */
   findQuestion: Question;
   /** Find user by id */
-  findUser: User;
+  findUser?: Maybe<User>;
   /** Find user by firebase UID */
-  findUserByFirebaseUid: User;
+  findUserByFirebaseUid?: Maybe<User>;
 };
 
 
@@ -446,7 +450,7 @@ export type UpdateQuestionInput = {
  * and integrates with async-graphql for GraphQL APIs.
  * # Example
  *
- * ```rust
+ * ```rust, ignore
  * use crate::models::User;
  * use chrono::Utc;
  *
