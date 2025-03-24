@@ -10,11 +10,17 @@ use axum::{
 use backend::auth::firebase_auth::AuthenticatedUser;
 use backend::db::pool::create_app_pool;
 use backend::graphql::schema::{create_schema, AppSchema};
+use backend::ws::{ws_handler, Games};
 use dotenvy::dotenv;
-use http::header::{AUTHORIZATION, CONTENT_TYPE};
+use http::header::{
+    AUTHORIZATION, CONNECTION, CONTENT_TYPE, SEC_WEBSOCKET_KEY, SEC_WEBSOCKET_PROTOCOL,
+    SEC_WEBSOCKET_VERSION, UPGRADE,
+};
 use http::{HeaderValue, Method, StatusCode};
+use std::collections::HashMap;
 use std::env;
 use std::net::SocketAddr;
+use std::sync::{Arc, Mutex};
 use tower_http::cors::CorsLayer;
 use tracing::error;
 use tracing_subscriber::EnvFilter;
@@ -134,15 +140,27 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let cors = CorsLayer::new()
         .allow_origin(allowed_origins)
         .allow_methods([Method::GET, Method::POST, Method::OPTIONS])
-        .allow_headers([CONTENT_TYPE, AUTHORIZATION])
+        .allow_headers([
+            CONTENT_TYPE,
+            AUTHORIZATION,
+            CONNECTION,
+            UPGRADE,
+            SEC_WEBSOCKET_KEY,
+            SEC_WEBSOCKET_PROTOCOL,
+            SEC_WEBSOCKET_VERSION,
+        ])
         .allow_credentials(true);
 
     // Add Firebase project ID to app state
     let app_state = firebase_project_id;
+    // Initialize the shared games state.
+    let games: Games = Arc::new(Mutex::new(HashMap::new()));
 
     let app = Router::new()
         .route("/", get(root_handler))
         .route("/graphql", get(graphql_playground).post(graphql_handler))
+        .route("/ws", get(ws_handler))
+        .layer(Extension(games))
         .layer(Extension(schema))
         .layer(axum::middleware::from_fn_with_state(
             app_state.clone(),
@@ -165,7 +183,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("Server running at http://{}", &addr);
 
     axum_server::bind(addr)
-        .serve(app.into_make_service())
+        .serve(app.into_make_service_with_connect_info::<SocketAddr>())
         .await?;
 
     Ok(())

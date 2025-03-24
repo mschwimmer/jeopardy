@@ -9,7 +9,7 @@ name = "backend" # Name of the binary
 # path = "src/main.rs"    # Default path is "src/main.rs"
 
 [dependencies]
-axum = { version = "0.8.1", features = ["macros"] }
+axum = { version = "0.8.1", features = ["macros", "ws"] }
 async-graphql = { version = "7.0.15", default-features = false, features = [
     "chrono",
     "playground",
@@ -44,6 +44,11 @@ reqwest = { version = "0.12.12", features = ["json"] }
 serde = "1.0.218"
 async-trait = "0.1.86"
 serde_json = "1.0.139"
+axum-extra = { version = "0.10.0", features = ["typed-header"] }
+futures = "0.3.31"
+futures-util = { version = "0.3.31", features = ["sink", "std"] }
+headers = "0.4.0"
+rand = "0.9.0"
 
 
 [dev-dependencies]
