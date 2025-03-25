@@ -42,6 +42,7 @@ export const FIND_GAME_QUERY = gql`
       updatedAt
       gameBoardId
       userId
+      roomCode
     }
   }
 `;
@@ -180,4 +181,23 @@ export async function fetchGameBoardsFromUser(userId: number) {
   });
 
   return data.fetchGameBoardsFromUser;
+}
+
+export const GAME_ROOM_QUERY = gql`
+  query FindGameFromRoomCode($roomCode: String!) {
+    findGameByRoomCode(roomCode: $roomCode) {
+      id
+      roomCode
+    }
+  }
+`;
+
+export async function findGameByRoomCode(roomCode: string) {
+  const { data } = await client.query({
+    query: GAME_ROOM_QUERY,
+    variables: { roomCode },
+    fetchPolicy: "network-only",
+  });
+
+  return data.findGameByRoomCode;
 }

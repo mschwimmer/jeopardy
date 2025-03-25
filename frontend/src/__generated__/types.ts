@@ -63,6 +63,7 @@ export type Game = {
   gameBoard: GameBoard;
   gameBoardId: Scalars['Int']['output'];
   id: Scalars['Int']['output'];
+  roomCode: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
   user: User;
   userId: Scalars['Int']['output'];
@@ -335,6 +336,8 @@ export type RootQuery = {
   findGameBoardMapping: GameBoardQuestionMapping;
   /** Find GameBoardQuestion from game_board_id and question_id */
   findGameBoardQuestion: GameBoardQuestion;
+  /** Find a single game by room code */
+  findGameByRoomCode: Game;
   /** Find a single player by id */
   findPlayer: Player;
   /** Find a single question by id */
@@ -400,6 +403,11 @@ export type RootQueryFindGameBoardMappingArgs = {
 export type RootQueryFindGameBoardQuestionArgs = {
   gameBoardId: Scalars['Int']['input'];
   questionId: Scalars['Int']['input'];
+};
+
+
+export type RootQueryFindGameByRoomCodeArgs = {
+  roomCode: Scalars['String']['input'];
 };
 
 

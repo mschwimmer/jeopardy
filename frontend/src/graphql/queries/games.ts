@@ -10,6 +10,7 @@ export const GAME_QUERY = gql`
       updatedAt
       gameBoardId
       userId
+      roomCode
     }
   }
 `;
@@ -22,6 +23,20 @@ export const PLAYER_GAMES_QUERY = gql`
       updatedAt
       userId
       gameBoardId
+      roomCode
+    }
+  }
+`;
+
+export const GAME_ROOM_QUERY = gql`
+  query FindGameFromRoomCode($roomCode: String!) {
+    findGameByRoomCode(roomCode: $roomCode) {
+      id
+      createdAt
+      updatedAt
+      gameBoardId
+      userId
+      roomCode
     }
   }
 `;

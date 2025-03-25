@@ -10,11 +10,17 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, backendUser, loading, loadingBackendUser } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
-  const publicRoutes = useMemo(() => ["/", "/sign-in", "/sign-up"], []);
+  const publicRoutes = useMemo(
+    () => ["/", "/sign-in", "/sign-up", "/join"],
+    []
+  );
 
   useEffect(() => {
+    const isPublicRoute = publicRoutes.some((route) =>
+      route === "/" ? pathname === "/" : pathname.startsWith(route)
+    );
     // Redirect to sign-in if user is not authenticated and on a protected route
-    if (!loading && !user && !publicRoutes.includes(pathname)) {
+    if (!loading && !user && !isPublicRoute) {
       // TODO tell user they're not signed in, and redirecting to sign-in
       router.push("/sign-in");
       return;

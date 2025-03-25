@@ -66,6 +66,7 @@ export type Game = {
   gameBoard: GameBoard;
   gameBoardId: Scalars['Int']['output'];
   id: Scalars['Int']['output'];
+  roomCode: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
   user: User;
   userId: Scalars['Int']['output'];
@@ -338,6 +339,8 @@ export type RootQuery = {
   findGameBoardMapping: GameBoardQuestionMapping;
   /** Find GameBoardQuestion from game_board_id and question_id */
   findGameBoardQuestion: GameBoardQuestion;
+  /** Find a single game by room code */
+  findGameByRoomCode: Game;
   /** Find a single player by id */
   findPlayer: Player;
   /** Find a single question by id */
@@ -403,6 +406,11 @@ export type RootQueryFindGameBoardMappingArgs = {
 export type RootQueryFindGameBoardQuestionArgs = {
   gameBoardId: Scalars['Int']['input'];
   questionId: Scalars['Int']['input'];
+};
+
+
+export type RootQueryFindGameByRoomCodeArgs = {
+  roomCode: Scalars['String']['input'];
 };
 
 
@@ -639,14 +647,21 @@ export type FindGameQueryVariables = Exact<{
 }>;
 
 
-export type FindGameQuery = { __typename?: 'RootQuery', findGame: { __typename?: 'Game', id: number, createdAt: any, updatedAt: any, gameBoardId: number, userId: number } };
+export type FindGameQuery = { __typename?: 'RootQuery', findGame: { __typename?: 'Game', id: number, createdAt: any, updatedAt: any, gameBoardId: number, userId: number, roomCode: string } };
 
 export type FetchGamesFromUserQueryVariables = Exact<{
   userId: Scalars['Int']['input'];
 }>;
 
 
-export type FetchGamesFromUserQuery = { __typename?: 'RootQuery', fetchGamesFromUser: Array<{ __typename?: 'Game', id: number, createdAt: any, updatedAt: any, userId: number, gameBoardId: number }> };
+export type FetchGamesFromUserQuery = { __typename?: 'RootQuery', fetchGamesFromUser: Array<{ __typename?: 'Game', id: number, createdAt: any, updatedAt: any, userId: number, gameBoardId: number, roomCode: string }> };
+
+export type FindGameFromRoomCodeQueryVariables = Exact<{
+  roomCode: Scalars['String']['input'];
+}>;
+
+
+export type FindGameFromRoomCodeQuery = { __typename?: 'RootQuery', findGameByRoomCode: { __typename?: 'Game', id: number, createdAt: any, updatedAt: any, gameBoardId: number, userId: number, roomCode: string } };
 
 export type FindPlayerQueryVariables = Exact<{
   playerId: Scalars['Int']['input'];
@@ -1574,6 +1589,7 @@ export const FindGameDocument = gql`
     updatedAt
     gameBoardId
     userId
+    roomCode
   }
 }
     `;
@@ -1618,6 +1634,7 @@ export const FetchGamesFromUserDocument = gql`
     updatedAt
     userId
     gameBoardId
+    roomCode
   }
 }
     `;
@@ -1654,6 +1671,51 @@ export type FetchGamesFromUserQueryHookResult = ReturnType<typeof useFetchGamesF
 export type FetchGamesFromUserLazyQueryHookResult = ReturnType<typeof useFetchGamesFromUserLazyQuery>;
 export type FetchGamesFromUserSuspenseQueryHookResult = ReturnType<typeof useFetchGamesFromUserSuspenseQuery>;
 export type FetchGamesFromUserQueryResult = Apollo.QueryResult<FetchGamesFromUserQuery, FetchGamesFromUserQueryVariables>;
+export const FindGameFromRoomCodeDocument = gql`
+    query FindGameFromRoomCode($roomCode: String!) {
+  findGameByRoomCode(roomCode: $roomCode) {
+    id
+    createdAt
+    updatedAt
+    gameBoardId
+    userId
+    roomCode
+  }
+}
+    `;
+
+/**
+ * __useFindGameFromRoomCodeQuery__
+ *
+ * To run a query within a React component, call `useFindGameFromRoomCodeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useFindGameFromRoomCodeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useFindGameFromRoomCodeQuery({
+ *   variables: {
+ *      roomCode: // value for 'roomCode'
+ *   },
+ * });
+ */
+export function useFindGameFromRoomCodeQuery(baseOptions: Apollo.QueryHookOptions<FindGameFromRoomCodeQuery, FindGameFromRoomCodeQueryVariables> & ({ variables: FindGameFromRoomCodeQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<FindGameFromRoomCodeQuery, FindGameFromRoomCodeQueryVariables>(FindGameFromRoomCodeDocument, options);
+      }
+export function useFindGameFromRoomCodeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<FindGameFromRoomCodeQuery, FindGameFromRoomCodeQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<FindGameFromRoomCodeQuery, FindGameFromRoomCodeQueryVariables>(FindGameFromRoomCodeDocument, options);
+        }
+export function useFindGameFromRoomCodeSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<FindGameFromRoomCodeQuery, FindGameFromRoomCodeQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<FindGameFromRoomCodeQuery, FindGameFromRoomCodeQueryVariables>(FindGameFromRoomCodeDocument, options);
+        }
+export type FindGameFromRoomCodeQueryHookResult = ReturnType<typeof useFindGameFromRoomCodeQuery>;
+export type FindGameFromRoomCodeLazyQueryHookResult = ReturnType<typeof useFindGameFromRoomCodeLazyQuery>;
+export type FindGameFromRoomCodeSuspenseQueryHookResult = ReturnType<typeof useFindGameFromRoomCodeSuspenseQuery>;
+export type FindGameFromRoomCodeQueryResult = Apollo.QueryResult<FindGameFromRoomCodeQuery, FindGameFromRoomCodeQueryVariables>;
 export const FindPlayerDocument = gql`
     query FindPlayer($playerId: Int!) {
   findPlayer(playerId: $playerId) {

@@ -3,6 +3,7 @@ import styles from "../../styles/common.module.css";
 import * as React from "react";
 import GameBoardGrid from "./GameBoardGrid";
 import Scoreboard from "./Scoreboard";
+import { WebSocketTest } from "./WebSocket";
 import { GameContextProvider } from "./GameContext";
 import { fetchGame, fetchGameBoard } from "@/app/lib/serverQueries";
 import { Game, GameBoard } from "@/__generated__/types";
@@ -29,6 +30,7 @@ export default async function GamePage({
                 gameBoard={gameBoard}
                 className={pageStyles.gameBoard}
               />
+              <WebSocketTest />
             </div>
           </GameContextProvider>
         </main>
