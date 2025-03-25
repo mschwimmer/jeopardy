@@ -147,7 +147,7 @@ impl Game {
 
         for _ in 0..MAX_ATTEMPTS {
             // Generate a random 6-character alphanumeric room code
-            let room_code: String = Alphanumeric.sample_string(&mut rand::rng(), 6);
+            let room_code: String = Alphanumeric.sample_string(&mut rand::rng(), ROOM_CODE_LENGTH);
 
             // Check if the room code already exists
             let existing_count = games::table
