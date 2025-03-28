@@ -1,3 +1,4 @@
+mod error;
 mod handler;
 mod socket;
 mod state;

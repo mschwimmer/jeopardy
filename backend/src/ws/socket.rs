@@ -87,12 +87,19 @@ pub async fn handle_socket(
                     };
                     // Get the game state for this game_id
                     if let Some(game_state) = games_lock.get_mut(&room_code_clone) {
-                        match game_state.first_buzzer {
+                        let buzzer = game_state
+                            .players
+                            .get(&who)
+                            .map(|player| player.player_name.clone())
+                            .unwrap_or_else(|| who.to_string());
+                        match game_state.first_buzzer.clone() {
+                            // If there's an existing first_buzzer
                             Some(first_buzzer) => {
-                                if first_buzzer == who {
-                                    tracing::info!("Player {who} buzzed again");
+                                if first_buzzer == buzzer {
+                                    tracing::info!("Player {buzzer} buzzed again");
                                     // Broadcast to all players that {who} buzzed again
-                                    game_state.broadcast(format!("Player {} buzzed again!", who));
+                                    game_state
+                                        .broadcast(format!("Player {} buzzed again!", buzzer));
                                 } else {
                                     tracing::info!(
                                         "Player {who} buzzed, but {first_buzzer} already buzzed first"
@@ -104,11 +111,12 @@ pub async fn handle_socket(
                                     ));
                                 }
                             }
+                            // No existing first buzzer, buzzer must be first
                             None => {
-                                game_state.first_buzzer = Some(who);
-                                tracing::info!("Player {who} buzzed first");
+                                game_state.first_buzzer = Some(buzzer.clone());
+                                tracing::info!("Player {buzzer} buzzed first");
                                 // Broadcast to all players that {who} buzzed first
-                                game_state.broadcast(format!("Player {} buzzed first!", who));
+                                game_state.broadcast(format!("Player {} buzzed first!", buzzer));
                             }
                         }
                     }
@@ -151,13 +159,17 @@ pub async fn handle_socket(
         };
         if let Some(game_state) = games_lock.get_mut(&room_code) {
             // Remove the player from the game
-            game_state.players.retain(|&p| p != who);
+            let removed_player = game_state.players.remove(&who);
 
             // If this was the first buzzer, reset it
-            if game_state.first_buzzer == Some(who) {
-                game_state.first_buzzer = None;
-                // Optionally broadcast that the buzzer has been reset due to player disconnect
-                game_state.broadcast(format!("Buzzer reset because player {} disconnected", who));
+            if let Some(player) = removed_player {
+                if game_state.first_buzzer.as_deref() == Some(&player.player_name) {
+                    game_state.first_buzzer = None;
+                    game_state.broadcast(format!(
+                        "Buzzer reset because player {} disconnected",
+                        player.player_name
+                    ));
+                }
             }
         }
     }

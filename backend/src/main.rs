@@ -1,14 +1,17 @@
+// src/main.rs
+
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::response::IntoResponse;
 use axum::{
     extract::{Extension, FromRequestParts, State},
+    http::{HeaderValue, Method, StatusCode, Uri},
     response::Html,
     routing::get,
     Router,
 };
 use backend::auth::firebase_auth::AuthenticatedUser;
-use backend::db::pool::create_app_pool;
+use backend::db::pool::{create_app_pool, DBPool};
 use backend::graphql::schema::{create_schema, AppSchema};
 use backend::ws::{ws_handler, Games};
 use dotenvy::dotenv;
@@ -16,7 +19,6 @@ use http::header::{
     AUTHORIZATION, CONNECTION, CONTENT_TYPE, SEC_WEBSOCKET_KEY, SEC_WEBSOCKET_PROTOCOL,
     SEC_WEBSOCKET_VERSION, UPGRADE,
 };
-use http::{HeaderValue, Method, StatusCode};
 use std::collections::HashMap;
 use std::env;
 use std::net::SocketAddr;
@@ -64,7 +66,16 @@ async fn auth_middleware(
     let (mut parts, body) = request.into_parts();
 
     tracing::info!("Auth middleware");
-    tracing::info!("Firebase project ID: {}", firebase_project_id);
+    // tracing::info!("Firebase project ID: {}", firebase_project_id);
+
+    // Skip authentication if websocket request
+    let path = parts.uri.path();
+    if path == "/ws" {
+        tracing::info!("Skipping auth for /ws");
+        parts.extensions.insert(None::<AuthenticatedUser>);
+        let request = axum::extract::Request::from_parts(parts, body);
+        return next.run(request).await;
+    }
 
     // If successful, add it to extensions
     match AuthenticatedUser::from_request_parts(&mut parts, &firebase_project_id).await {
@@ -117,10 +128,10 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("Using Firebase project ID: {}", firebase_project_id);
 
     // Try to get a connection from our DBPool
-    let pool = create_app_pool()?;
+    let pool: DBPool = create_app_pool()?;
 
     // Create graphql schema
-    let schema = create_schema(pool);
+    let schema = create_schema(pool.clone());
 
     let default_origin = "http://localhost:3000".to_string();
     let allowed_origins: Vec<HeaderValue> = match env::var("ALLOWED_ORIGINS") {
@@ -160,6 +171,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         .route("/", get(root_handler))
         .route("/graphql", get(graphql_playground).post(graphql_handler))
         .route("/ws", get(ws_handler))
+        .layer(Extension(pool.clone()))
         .layer(Extension(games))
         .layer(Extension(schema))
         .layer(axum::middleware::from_fn_with_state(
@@ -168,7 +180,11 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         )) // Overrides with Some(user) if exists
         .layer(Extension(None::<AuthenticatedUser>)) // Default empty user
         .with_state(app_state)
-        .layer(cors);
+        .layer(cors)
+        .fallback(|uri: Uri| async move {
+            tracing::warn!("Unmatched route hit: {}", uri);
+            (StatusCode::NOT_FOUND, "Route not found")
+        });
 
     let port = env::var("PORT")
         .unwrap_or_else(|_| "8080".to_string())

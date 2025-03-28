@@ -1,16 +1,16 @@
 // src/ws/state.rs
 
-use crate::models::game::Game;
+use crate::models::{game::Game, player::Player};
 use diesel_async::AsyncPgConnection;
-use std::net::SocketAddr;
+use std::{collections::HashMap, net::SocketAddr};
 use tokio::sync::broadcast;
 
 #[derive(Default)]
 pub struct GameState {
     pub game: Option<Game>,
     pub room_code: String,
-    pub players: Vec<SocketAddr>,
-    pub first_buzzer: Option<SocketAddr>,
+    pub players: HashMap<SocketAddr, Player>,
+    pub first_buzzer: Option<String>,
     pub broadcast_tx: Option<broadcast::Sender<String>>,
 }
 
@@ -28,7 +28,7 @@ impl GameState {
         Ok(Self {
             game: Some(game.clone()),
             room_code: game.room_code.clone(),
-            players: Vec::new(),
+            players: HashMap::new(),
             first_buzzer: None,
             broadcast_tx: Some(broadcast_tx),
         })

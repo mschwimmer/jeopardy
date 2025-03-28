@@ -1,5 +1,7 @@
 // src/ws/handler.rs
 use crate::db::pool::DBPool;
+use crate::models::player::Player;
+use crate::ws::error::ApiError;
 use crate::ws::socket::handle_socket;
 use crate::ws::state::GameState;
 use crate::ws::Games;
@@ -9,7 +11,6 @@ use axum::{
         ws::{WebSocket, WebSocketUpgrade},
         Extension, Query,
     },
-    http::StatusCode,
     response::IntoResponse,
 };
 use axum_extra::TypedHeader;
@@ -29,7 +30,7 @@ pub async fn ws_handler(
     Query(params): Query<HashMap<String, String>>,
     Extension(games): Extension<Games>,
     Extension(db_pool): Extension<DBPool>,
-) -> impl IntoResponse {
+) -> Result<impl IntoResponse, ApiError> {
     tracing::info!("WebSocket connection request received");
     tracing::info!("Params: {:?}", params);
 
@@ -39,31 +40,34 @@ pub async fn ws_handler(
         "Unkown Browser".to_string()
     };
 
-    let room_code: String = params.get("room_code").cloned().unwrap_or_else(|| {
-        tracing::warn!("No room code provided, using default");
-        "DEFAULT".to_string()
-    });
+    let room_code: String = params
+        .get("room_code")
+        .cloned()
+        .ok_or_else(|| ApiError::InvalidRoomCode)?;
+
+    let player_id_str: String = params
+        .get("player_id")
+        .cloned()
+        .ok_or_else(|| ApiError::InvalidPlayerId)?;
+    let player_id: i64 = player_id_str.parse::<i64>().unwrap();
 
     // Todo, validate room code
     tracing::info!("Client {addr} wants to join game with room code {room_code}");
 
     // Get a connection from the pool
-    let mut conn = match db_pool.get().await {
-        Ok(conn) => conn,
-        Err(e) => {
-            tracing::error!("Failed to get database connection: {:?}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "Database connection error",
-            )
-                .into_response();
-        }
-    };
+    let mut conn = db_pool
+        .get()
+        .await
+        .map_err(|_| ApiError::DatabaseConnectionError)?;
+
+    // Use connection to retrieve player object
+    let player: Player = Player::find_by_id(&mut conn, player_id)
+        .await
+        .map_err(|_| ApiError::InvalidPlayerId)?;
 
     // Check and create game state if needed
     {
-        let mut should_insert = false;
-        {
+        let should_insert: bool = {
             let games_lock = match games.lock() {
                 Ok(guard) => guard,
                 Err(poisoned) => {
@@ -71,23 +75,14 @@ pub async fn ws_handler(
                     poisoned.into_inner()
                 }
             };
-
-            should_insert = !games_lock.contains_key(&room_code);
-        }
+            !games_lock.contains_key(&room_code)
+        };
 
         // Create game state outside of lock if needed
         if should_insert {
-            let new_state = match GameState::new(&mut conn, room_code.clone()).await {
-                Ok(state) => state,
-                Err(e) => {
-                    tracing::error!("Failed to create game state: {:?}", e);
-                    return (
-                        StatusCode::INTERNAL_SERVER_ERROR,
-                        "Failed to create game state",
-                    )
-                        .into_response();
-                }
-            };
+            let new_state = GameState::new(&mut conn, room_code.clone())
+                .await
+                .map_err(|_| ApiError::GameStateCreationError)?;
 
             // Insert the new state
             let mut games_lock = match games.lock() {
@@ -109,9 +104,10 @@ pub async fn ws_handler(
             }
         };
         if let Some(game_state) = games_lock.get_mut(&room_code) {
-            game_state.players.push(addr);
+            // Add the player to the game state
+            game_state.players.insert(addr, player);
         }
     }
 
-    ws.on_upgrade(move |socket: WebSocket| handle_socket(socket, addr, room_code, games))
+    Ok(ws.on_upgrade(move |socket: WebSocket| handle_socket(socket, addr, room_code, games)))
 }
