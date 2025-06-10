@@ -18,7 +18,9 @@ pub struct CreateGameBoardInput {
 pub struct UpdateGameBoardInput {
     pub board_id: i64,
     pub title: Option<String>,
-    pub categories: Option<Vec<String>>,
+    /// Optional list of category names. Each entry may be `None` to represent
+    /// a NULL category value.
+    pub categories: Option<Vec<Option<String>>>,
 }
 
 #[derive(Default)]
@@ -86,7 +88,15 @@ impl GameBoardMutation {
             .await
             .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
 
-        let existing_game_board_result = GameBoard::find_by_id(&mut conn, input.board_id).await;
+        // Destructure the input now that the DB connection has been retrieved.
+        // This avoids partially moving fields later in the function.
+        let UpdateGameBoardInput {
+            board_id,
+            title,
+            categories,
+        } = input;
+
+        let existing_game_board_result = GameBoard::find_by_id(&mut conn, board_id).await;
 
         let _existing_game_board = match existing_game_board_result {
             Ok(game_board) => game_board,
@@ -100,24 +110,25 @@ impl GameBoardMutation {
         };
 
         // Input validation
-        if let Some(title) = &input.title {
+        if let Some(title) = &title {
             if title.is_empty() {
                 return Err(async_graphql::Error::new("Title length must be positive"));
             }
         }
-        if let Some(categories) = &input.categories {
+        if let Some(categories) = &categories {
             if categories.len() != 5 {
                 return Err(async_graphql::Error::new("Must have 5 categories"));
             }
         }
 
-        let updated_fields: UpdateGameBoard = UpdateGameBoard {
-            title: input.title,
-            categories: input.categories,
-        };
+        // Categories are already provided as `Option<Vec<Option<String>>>` from
+        // GraphQL, matching the structure expected by the model.
+        let categories: Option<Vec<Option<String>>> = categories;
+
+        let updated_fields: UpdateGameBoard = UpdateGameBoard { title, categories };
 
         let updated: GameBoard =
-            GameBoard::update_game_board(&mut conn, input.board_id, updated_fields).await?;
+            GameBoard::update_game_board(&mut conn, board_id, updated_fields).await?;
 
         Ok(updated)
     }
