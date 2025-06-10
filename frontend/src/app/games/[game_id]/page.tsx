@@ -23,8 +23,8 @@ export default async function GamePage({
     return (
       <div className={styles.page}>
         <main className={styles.main}>
-          <GameContextProvider room_code={game.roomCode}>
-            <Buzzer />
+          <GameContextProvider>
+            <Buzzer room_code={game.roomCode} />
             <div className={pageStyles.gameContainer}>
               <Scoreboard className={pageStyles.scoreboard} game_id={game_id} />
               <GameBoardGrid

@@ -26,6 +26,9 @@ pub enum ApiError {
 
     #[error("Mutex lock error")]
     MutexLockError,
+
+    #[error("Failed to find player")]
+    PlayerNotFoundError,
 }
 
 // Implement IntoResponse for ApiError
@@ -64,6 +67,10 @@ impl IntoResponse for ApiError {
                     StatusCode::INTERNAL_SERVER_ERROR,
                     "Internal synchronization error",
                 )
+            }
+            ApiError::PlayerNotFoundError => {
+                tracing::error!("Player not found");
+                (StatusCode::INTERNAL_SERVER_ERROR, "Player not found")
             }
         };
 

@@ -2,6 +2,7 @@ mod error;
 mod handler;
 mod socket;
 mod state;
+mod utils;
 
 pub use handler::ws_handler;
 pub use socket::handle_socket;

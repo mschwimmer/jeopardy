@@ -4,6 +4,7 @@ use crate::models::player::Player;
 use crate::ws::error::ApiError;
 use crate::ws::socket::handle_socket;
 use crate::ws::state::GameState;
+use crate::ws::utils::get_games_lock;
 use crate::ws::Games;
 use axum::{
     extract::{
@@ -63,18 +64,12 @@ pub async fn ws_handler(
     // Use connection to retrieve player object
     let player: Player = Player::find_by_id(&mut conn, player_id)
         .await
-        .map_err(|_| ApiError::InvalidPlayerId)?;
+        .map_err(|_| ApiError::PlayerNotFoundError)?;
 
     // Check and create game state if needed
     {
         let should_insert: bool = {
-            let games_lock = match games.lock() {
-                Ok(guard) => guard,
-                Err(poisoned) => {
-                    tracing::warn!("Mutex was poisoned, recovering");
-                    poisoned.into_inner()
-                }
-            };
+            let games_lock = get_games_lock(&games);
             !games_lock.contains_key(&room_code)
         };
 
@@ -85,29 +80,18 @@ pub async fn ws_handler(
                 .map_err(|_| ApiError::GameStateCreationError)?;
 
             // Insert the new state
-            let mut games_lock = match games.lock() {
-                Ok(guard) => guard,
-                Err(poisoned) => {
-                    tracing::warn!("Mutex was poisoned, recovering");
-                    poisoned.into_inner()
-                }
-            };
+            let mut games_lock = get_games_lock(&games);
             games_lock.insert(room_code.clone(), new_state);
         }
 
         // Add client to game state
-        let mut games_lock = match games.lock() {
-            Ok(guard) => guard,
-            Err(poisoned) => {
-                tracing::warn!("Mutex was poisoned, recovering");
-                poisoned.into_inner()
-            }
-        };
+        let mut games_lock = get_games_lock(&games);
         if let Some(game_state) = games_lock.get_mut(&room_code) {
             // Add the player to the game state
             game_state.players.insert(addr, player);
         }
     }
 
+    // TODO figure out why this has an error
     Ok(ws.on_upgrade(move |socket: WebSocket| handle_socket(socket, addr, room_code, games)))
 }
