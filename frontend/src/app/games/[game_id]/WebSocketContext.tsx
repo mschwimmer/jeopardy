@@ -1,29 +1,38 @@
+// This file sets up a React Context to provide WebSocket functionality to child components.
+// It manages the WebSocket connection lifecycle and exposes methods to send structured messages
+// (like "buzz" and "reset") to a game server. It should be placed high in the React component tree.
+
 "use client";
 import React, { createContext, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/app/lib/AuthProvider";
 
+// Types of messages the server can send or receive
 export type ServerMessageType = "buzz" | "reset" | "status";
 
+// Structure of the data field in a server message
 export interface ServerData {
   user_id?: string;
   buzz_time?: number;
   status?: string;
 }
 
+// Full structure of a message sent between client and server
 export interface ServerMessage {
   type: ServerMessageType;
   data: ServerData;
   timestamp: number;
 }
 
+// Shape of the WebSocket context available to consumers
 interface WebsocketContextValue {
-  ready: boolean;
-  value: ServerMessage | null;
-  send: (message: string) => void;
+  ready: boolean; // Whether the WebSocket is open and ready
+  value: ServerMessage | null; // Latest message received from the server
+  send: (message: string) => void; // Raw message sender
   sendBuzz: () => void;
   sendReset: () => void;
 }
 
+// Default context value (used before provider is initialized)
 export const WebsocketContext = createContext<
   WebsocketContextValue | undefined
 >({
@@ -33,15 +42,15 @@ export const WebsocketContext = createContext<
   sendBuzz: () => {},
   sendReset: () => {},
 });
-// ready, value, send
 
+// Props expected by the WebSocket provider
 interface WebsocketContextProviderProps {
   children: React.ReactNode;
   room_code: string;
   display_name?: string; // Optional display name for the host
 }
 
-// helpers
+// Helper to construct the WebSocket URL with query parameters
 const buildSocketUrl = (
   room_code: string,
   host_id: string,
@@ -55,8 +64,10 @@ const buildSocketUrl = (
   return `ws://localhost:8080/ws?${params.toString()}`;
 };
 
-// Make sure to put WebsocketProvider higher up in
-// the component tree than any consumer.
+/**
+ * WebSocket provider that establishes the connection and shares it via React Context.
+ * Wrap components that need to send/receive WebSocket messages inside this provider.
+ */
 export const WebsocketProvider = ({
   children,
   room_code,
@@ -93,6 +104,7 @@ export const WebsocketProvider = ({
   const sendBuzz = () => sendStructured("buzz");
   const sendReset = () => sendStructured("reset");
 
+  // Establish WebSocket connection on mount and clean up on unmount
   useEffect(() => {
     if (!backendUser?.id) {
       console.error("No backend user found");
@@ -120,6 +132,7 @@ export const WebsocketProvider = ({
       console.warn("WebSocket error", e);
     };
     socket.onmessage = (event) => {
+      console.log("Raw WebSocket message:", event.data);
       try {
         const parsed: ServerMessage = JSON.parse(event.data);
         console.log("Received structured:", parsed);

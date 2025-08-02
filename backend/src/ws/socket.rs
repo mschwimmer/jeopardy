@@ -3,7 +3,7 @@ use crate::ws::utils::get_games_lock;
 use crate::ws::Games;
 use axum::{
     body::Bytes,
-    extract::ws::{Message, WebSocket},
+    extract::ws::{Message, Utf8Bytes, WebSocket},
 };
 use futures::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
@@ -48,8 +48,21 @@ async fn run_broadcast_task(
 ) {
     while let Ok(msg) = broadcast_rx.recv().await {
         tracing::info!("Forwarding broadcast message to {}", who);
-        if sender.send(Message::Text(msg.into())).await.is_err() {
-            break;
+        // Create ServerMessage and send to client
+        let server_message: ServerMessage = ServerMessage {
+            message_type: ServerMessageType::Status,
+            data: ServerData {
+                user_id: Some(who.to_string()),
+                status: Some(msg.clone()),
+                ..Default::default()
+            },
+            timestamp: chrono::Utc::now().timestamp_millis() as u64,
+        };
+        if let Ok(json_string) = serde_json::to_string(&server_message) {
+            let json_bytes = Utf8Bytes::from(json_string); // Step 2: convert String → Utf8Bytes
+            if sender.send(Message::Text(json_bytes)).await.is_err() {
+                break;
+            }
         }
     }
 }

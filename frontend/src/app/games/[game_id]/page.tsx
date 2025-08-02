@@ -3,7 +3,7 @@ import styles from "../../styles/common.module.css";
 import * as React from "react";
 import GameBoardGrid from "./GameBoardGrid";
 import Scoreboard from "./Scoreboard";
-import { Buzzer } from "./Buzzer";
+import { HostBuzzer } from "./HostBuzzer";
 import { GameContextProvider } from "./GameContext";
 import { fetchGame, fetchGameBoard } from "@/app/lib/serverQueries";
 import { Game, GameBoard } from "@/__generated__/types";
@@ -26,7 +26,7 @@ export default async function GamePage({
         <main className={styles.main}>
           <GameContextProvider>
             <WebsocketProvider room_code={game.roomCode}>
-              <Buzzer room_code={game.roomCode} />
+              <HostBuzzer room_code={game.roomCode} />
               <div className={pageStyles.gameContainer}>
                 <Scoreboard
                   className={pageStyles.scoreboard}

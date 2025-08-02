@@ -1,13 +1,17 @@
+// This React component provides a simple interface for the host to control the buzzer system.
+// It allows the host to send "buzz" and "reset" signals to the WebSocket server, and displays
+// incoming messages from connected clients for debugging or monitoring purposes.
+
 "use client";
 
 import { useContext, useEffect, useState } from "react";
 import { WebsocketContext } from "./WebSocketContext";
 
-export const Buzzer = ({ room_code }: { room_code: string }) => {
+export const HostBuzzer = ({ room_code }: { room_code: string }) => {
   const context = useContext(WebsocketContext);
   const [messages, setMessages] = useState<string[]>([]);
 
-  // Update messages when a new message is received
+  // When a new WebSocket message is received, format and store it in the local state
   useEffect(() => {
     if (context?.value) {
       try {
