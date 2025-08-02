@@ -65,7 +65,7 @@ async fn auth_middleware(
     // Split request into parts
     let (mut parts, body) = request.into_parts();
 
-    tracing::info!("Auth middleware");
+    // tracing::info!("Auth middleware");
     // tracing::info!("Firebase project ID: {}", firebase_project_id);
 
     // Skip authentication if websocket request

@@ -65,6 +65,7 @@ async fn handle_client_message(
     while let Some(Ok(msg)) = receiver.next().await {
         match msg {
             Message::Text(text) => {
+                tracing::info!("Received message from {}: {}", who, text);
                 match serde_json::from_str::<ServerMessage>(&text) {
                     Ok(server_message) => {
                         match server_message.message_type {
@@ -77,9 +78,9 @@ async fn handle_client_message(
                                     // Get the buzzer's name
                                     // Default to SocketAddr if player's name not found
                                     let buzzer = game_state
-                                        .players
+                                        .clients
                                         .get(&who)
-                                        .map(|player| player.player_name.clone())
+                                        .map(|client| client.display_name.clone())
                                         .unwrap_or_else(|| who.to_string());
                                     // Check if this is the first buzzer
                                     // If the first buzzer is None, set it to the current buzzer
@@ -212,15 +213,15 @@ pub async fn handle_socket(
         let mut games_lock = get_games_lock(&games);
         if let Some(game_state) = games_lock.get_mut(&room_code) {
             // Remove the player from the game
-            let removed_player = game_state.players.remove(&who);
+            let removed_client = game_state.clients.remove(&who);
 
             // If this was the first buzzer, reset it
-            if let Some(player) = removed_player {
-                if game_state.first_buzzer.as_deref() == Some(&player.player_name) {
+            if let Some(client) = removed_client {
+                if game_state.first_buzzer.as_deref() == Some(&client.display_name) {
                     game_state.first_buzzer = None;
                     game_state.broadcast(format!(
                         "Buzzer reset because player {} disconnected",
-                        player.player_name
+                        client.display_name
                     ));
                 }
             }

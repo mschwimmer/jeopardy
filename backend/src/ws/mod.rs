@@ -3,6 +3,7 @@ mod handler;
 mod socket;
 mod state;
 mod utils;
+mod validators;
 
 pub use handler::ws_handler;
 pub use socket::handle_socket;

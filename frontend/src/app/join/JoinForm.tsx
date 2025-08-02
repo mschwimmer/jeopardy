@@ -21,7 +21,7 @@ export default function JoinForm() {
   const [generalError, setGeneralError] = React.useState("");
   const [formData, setFormData] = React.useState({
     room_code: "",
-    name: "",
+    display_name: "",
   });
   const [addPlayer, { loading: addLoading, error: addError }] =
     useCreatePlayerMutation();
@@ -32,7 +32,7 @@ export default function JoinForm() {
 
   const [formErrors, setFormErrors] = React.useState({
     room_code: { error: false, message: "" },
-    name: { error: false, message: "" },
+    display_name: { error: false, message: "" },
   });
   const router = useRouter();
 
@@ -62,11 +62,11 @@ export default function JoinForm() {
           newErrors.room_code = { error: false, message: "" };
         }
         break;
-      case "name":
+      case "display_name":
         if (!value) {
-          newErrors.name = { error: true, message: "Name is required" };
+          newErrors.display_name = { error: true, message: "Name is required" };
         } else {
-          newErrors.name = { error: false, message: "" };
+          newErrors.display_name = { error: false, message: "" };
         }
         break;
     }
@@ -75,9 +75,9 @@ export default function JoinForm() {
 
   const validateAllFields = () => {
     validateField("room_code", formData.room_code);
-    validateField("name", formData.name);
+    validateField("display_name", formData.display_name);
 
-    return !(formErrors.room_code.error || formErrors.name.error);
+    return !(formErrors.room_code.error || formErrors.display_name.error);
   };
 
   const handleJoinGame = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -106,7 +106,7 @@ export default function JoinForm() {
         variables: {
           input: {
             gameId: game.id,
-            playerName: formData.name,
+            playerName: formData.display_name,
           },
         },
       });
@@ -163,18 +163,18 @@ export default function JoinForm() {
           />
         </FormControl>
         <FormControl>
-          <FormLabel htmlFor="name">Your Nickname</FormLabel>
+          <FormLabel htmlFor="display_name">Your Display Name</FormLabel>
           <TextField
-            autoComplete="name"
-            name="name"
+            autoComplete="display_name"
+            name="display_name"
             required
             fullWidth
-            id="name"
-            value={formData.name}
+            id="display_name"
+            value={formData.display_name}
             onChange={handleInputChange}
-            error={formErrors.name.error}
-            helperText={formErrors.name.message}
-            color={formErrors.name.error ? "error" : "primary"}
+            error={formErrors.display_name.error}
+            helperText={formErrors.display_name.message}
+            color={formErrors.display_name.error ? "error" : "primary"}
           />
         </FormControl>
         <Button

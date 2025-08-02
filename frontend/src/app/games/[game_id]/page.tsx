@@ -7,6 +7,7 @@ import { Buzzer } from "./Buzzer";
 import { GameContextProvider } from "./GameContext";
 import { fetchGame, fetchGameBoard } from "@/app/lib/serverQueries";
 import { Game, GameBoard } from "@/__generated__/types";
+import { WebsocketProvider } from "./WebSocketContext";
 
 export default async function GamePage({
   params,
@@ -24,14 +25,19 @@ export default async function GamePage({
       <div className={styles.page}>
         <main className={styles.main}>
           <GameContextProvider>
-            <Buzzer room_code={game.roomCode} />
-            <div className={pageStyles.gameContainer}>
-              <Scoreboard className={pageStyles.scoreboard} game_id={game_id} />
-              <GameBoardGrid
-                gameBoard={gameBoard}
-                className={pageStyles.gameBoard}
-              />
-            </div>
+            <WebsocketProvider room_code={game.roomCode}>
+              <Buzzer room_code={game.roomCode} />
+              <div className={pageStyles.gameContainer}>
+                <Scoreboard
+                  className={pageStyles.scoreboard}
+                  game_id={game_id}
+                />
+                <GameBoardGrid
+                  gameBoard={gameBoard}
+                  className={pageStyles.gameBoard}
+                />
+              </div>
+            </WebsocketProvider>
           </GameContextProvider>
         </main>
       </div>

@@ -29,6 +29,9 @@ pub enum ApiError {
 
     #[error("Failed to find player")]
     PlayerNotFoundError,
+
+    #[error("Invalid display name")]
+    InvalidDisplayName,
 }
 
 // Implement IntoResponse for ApiError
@@ -71,6 +74,10 @@ impl IntoResponse for ApiError {
             ApiError::PlayerNotFoundError => {
                 tracing::error!("Player not found");
                 (StatusCode::INTERNAL_SERVER_ERROR, "Player not found")
+            }
+            ApiError::InvalidDisplayName => {
+                tracing::error!("Invalid display name provided");
+                (StatusCode::BAD_REQUEST, "Invalid display name provided")
             }
         };
 
