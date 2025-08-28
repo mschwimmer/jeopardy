@@ -1,6 +1,9 @@
 // src/ws/state.rs
 
-use crate::models::{game::Game, player::Player};
+use crate::{
+    models::{game::Game, player::Player},
+    ws::socket::ServerMessage,
+};
 use diesel_async::AsyncPgConnection;
 use std::{collections::HashMap, net::SocketAddr};
 use tokio::sync::broadcast;
@@ -38,7 +41,7 @@ pub struct GameState {
     pub clients: HashMap<SocketAddr, Client>,
     pub first_buzzer: Option<String>,
     pub buzzing_open: bool,
-    pub broadcast_tx: Option<broadcast::Sender<String>>,
+    pub broadcast_tx: Option<broadcast::Sender<ServerMessage>>,
 }
 
 impl GameState {
@@ -50,7 +53,7 @@ impl GameState {
         let game = Game::find_by_room_code(conn, room_code).await?;
 
         // Create a broadcast channel with capacity for 100 messages
-        let (broadcast_tx, _) = broadcast::channel::<String>(100);
+        let (broadcast_tx, _) = broadcast::channel::<ServerMessage>(100);
 
         Ok(Self {
             game: Some(game.clone()),
@@ -63,11 +66,15 @@ impl GameState {
     }
 
     // Method to send a message to all players
-    pub fn broadcast(&self, message: String) {
+    pub fn broadcast(&self, message: ServerMessage) {
         if let Some(broadcast_tx) = &self.broadcast_tx {
             // Send returns the number of receivers that got the message
-            let recv_count = broadcast_tx.send(message).unwrap_or(0);
-            tracing::debug!("Broadcasted message to all players: {}", recv_count);
+            let recv_count = broadcast_tx.send(message.clone()).unwrap_or(0);
+            tracing::debug!(
+                "Broadcasted message of type {:?} to {} clients",
+                message.message_type,
+                recv_count
+            );
         }
     }
 

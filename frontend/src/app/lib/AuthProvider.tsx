@@ -1,5 +1,7 @@
 "use client";
 // src/app/lib/AuthProvider.ts
+// This file provides authentication context to the application, only related to Firebase.
+// We separated backend user logic to another context to keep concerns separate.
 
 import React, { useContext, useEffect, useState } from "react";
 import AuthContext from "./AuthContext";
@@ -14,8 +16,8 @@ import {
   // UserCredential,
   User,
 } from "firebase/auth";
-import { User as BackendUser } from "@/__generated__/types";
-import { findUserByFirebaseUid } from "./serverQueries";
+// import { User as BackendUser } from "@/__generated__/types";
+// import { findUserByFirebaseUid } from "./serverQueries";
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -30,16 +32,16 @@ const AuthProvider = ({
 }: {
   children: React.ReactNode;
 }): React.ReactNode => {
-  const [user, setUser] = useState<User | null>(null);
-  const [backendUser, setBackendUser] = useState<BackendUser | null>(null);
-  const [loading, setLoading] = useState(true); // Firebase auth loading
-  const [loadingBackendUser, setLoadingBackendUser] = useState(true); // Backend user loading
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  // const [backendUser, setBackendUser] = useState<BackendUser | null>(null);
+  const [loadingFBase, setLoadingFBase] = useState(true); // Firebase auth loading
+  // const [loadingBackendUser, setLoadingBackendUser] = useState(true); // Backend user loading
 
   useEffect(() => {
     // Listen for authentication state changes
     const unsubscribe = onAuthStateChanged(fireBaseAuth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
+      setFirebaseUser(currentUser);
+      setLoadingFBase(false);
     });
 
     return () => unsubscribe();
@@ -47,26 +49,26 @@ const AuthProvider = ({
 
   // Fetch the backend user only when a firebase user exists
   // Possibly setLoading while looking for backendUser
-  useEffect(() => {
-    if (user) {
-      setLoadingBackendUser(true);
-      const fetchBackendUser = async () => {
-        try {
-          const fetchedUser = await findUserByFirebaseUid(user.uid);
-          setBackendUser(fetchedUser);
-        } catch (error) {
-          console.error("Error fetching backend user:", error);
-        } finally {
-          setLoadingBackendUser(false);
-        }
-      };
-      fetchBackendUser();
-    } else {
-      // Clear backend user when there is no firebase user
-      setBackendUser(null);
-      setLoadingBackendUser(false);
-    }
-  }, [user]);
+  // useEffect(() => {
+  //   if (firebaseUser) {
+  //     setLoadingBackendUser(true);
+  //     const fetchBackendUser = async () => {
+  //       try {
+  //         const fetchedUser = await findUserByFirebaseUid(firebaseUser.uid);
+  //         setBackendUser(fetchedUser);
+  //       } catch (error) {
+  //         console.error("Error fetching backend user:", error);
+  //       } finally {
+  //         setLoadingBackendUser(false);
+  //       }
+  //     };
+  //     fetchBackendUser();
+  //   } else {
+  //     // Clear backend user when there is no firebase user
+  //     setBackendUser(null);
+  //     setLoadingBackendUser(false);
+  //   }
+  // }, [firebaseUser]);
 
   // Sign up with email and password
   const signUp = (email: string, password: string) => {
@@ -91,10 +93,10 @@ const AuthProvider = ({
 
   // Context value
   const value = {
-    user,
-    backendUser,
-    loading,
-    loadingBackendUser,
+    firebaseUser,
+    // backendUser,
+    loadingFBase,
+    // loadingBackendUser,
     signUp,
     signIn,
     signInWithGoogle,
@@ -103,7 +105,7 @@ const AuthProvider = ({
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {!loadingFBase && children}
     </AuthContext.Provider>
   );
 };

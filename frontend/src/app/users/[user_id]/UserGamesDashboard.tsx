@@ -3,16 +3,34 @@
 import { DataGrid } from "@mui/x-data-grid";
 import * as React from "react";
 import { Paper, Typography } from "@mui/material";
-import { Game } from "@/__generated__/types";
 import Link from "next/link";
+import {
+  useFetchGamesFromUserQuery,
+  FetchGamesFromUserQuery,
+} from "@/__generated__/graphql";
 
-interface UserGamesDasboardProps {
-  games: Game[];
-}
+// We need to add non-nullable because generated types are all nullable
+type UserGames = NonNullable<FetchGamesFromUserQuery["fetchGamesFromUser"]>;
 
-export const UserGamesDasboard: React.FC<UserGamesDasboardProps> = ({
-  games,
-}) => {
+export const UserGamesDashboard = ({ user_id }: { user_id: string }) => {
+  const {
+    data: gamesData,
+    loading: gamesLoading,
+    error: gamesError,
+  } = useFetchGamesFromUserQuery({
+    variables: { userId: parseInt(user_id, 10) },
+  });
+
+  if (gamesLoading) return <p>Loading...</p>;
+  if (gamesError) {
+    console.error("Error loading game boards:", gamesError);
+    return <p>Failed to load game boards.</p>;
+  }
+  if (!gamesData?.fetchGamesFromUser) return <p>No game boards found.</p>;
+
+  // TODO figure out how to use a fragment type for this?
+  const games: UserGames = gamesData.fetchGamesFromUser;
+
   return (
     <div>
       <Typography variant="h4" gutterBottom>
@@ -37,7 +55,11 @@ export const UserGamesDasboard: React.FC<UserGamesDasboardProps> = ({
               headerName: "Categories",
               width: 200,
               renderCell: (params) => (
-                <div>{params.row.gameBoard.categories.join(" | ")}</div>
+                <div>
+                  {(params.row.gameBoard.categories ?? [])
+                    .filter(Boolean)
+                    .join(" | ")}
+                </div>
               ),
             },
             {

@@ -17,11 +17,10 @@ import styles from "./page.module.css";
 
 interface ScoreboardProps {
   className?: string;
-  game_id: string;
+  gameId: number;
 }
 
-const Scoreboard: React.FC<ScoreboardProps> = ({ className, game_id }) => {
-  const gameId = parseInt(game_id, 10);
+const Scoreboard: React.FC<ScoreboardProps> = ({ className, gameId }) => {
   const {
     data,
     loading,

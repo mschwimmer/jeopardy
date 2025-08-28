@@ -432,7 +432,11 @@ export type RootQueryFindUserByFirebaseUidArgs = {
 
 export type UpdateGameBoardInput = {
   boardId: Scalars['Int']['input'];
-  categories?: InputMaybe<Array<Scalars['String']['input']>>;
+  /**
+   * Optional list of category names. Each entry may be `None` to represent
+   * a NULL category value.
+   */
+  categories?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
 

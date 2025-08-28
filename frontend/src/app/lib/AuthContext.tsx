@@ -3,13 +3,13 @@
 // src/app/lib/AuthContext
 import { createContext } from "react";
 import { UserCredential, User } from "firebase/auth";
-import { User as BackendUser } from "@/__generated__/types";
+// import { User as BackendUser } from "@/__generated__/types";
 
 interface AuthContextType {
-  user: User | null;
-  backendUser: BackendUser | null;
-  loading: boolean;
-  loadingBackendUser: boolean;
+  firebaseUser: User | null;
+  // backendUser: BackendUser | null;
+  loadingFBase: boolean;
+  // loadingBackendUser: boolean;
   signUp: (email: string, password: string) => Promise<UserCredential>;
   signIn: (email: string, password: string) => Promise<UserCredential>;
   signInWithGoogle: () => Promise<UserCredential>;

@@ -435,7 +435,11 @@ export type RootQueryFindUserByFirebaseUidArgs = {
 
 export type UpdateGameBoardInput = {
   boardId: Scalars['Int']['input'];
-  categories?: InputMaybe<Array<Scalars['String']['input']>>;
+  /**
+   * Optional list of category names. Each entry may be `None` to represent
+   * a NULL category value.
+   */
+  categories?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -623,6 +627,8 @@ export type FetchGameBoardMappingsQueryVariables = Exact<{
 
 export type FetchGameBoardMappingsQuery = { __typename?: 'RootQuery', fetchGameBoardMappings: Array<{ __typename?: 'GameBoardQuestionMapping', boardId: number, questionId: number, dailyDouble: boolean, points: number, gridRow: number, gridCol: number }> };
 
+export type GameBoardDetailsFragment = { __typename?: 'GameBoard', id: number, createdAt: any, updatedAt: any, userId: number, title: string, categories: Array<string | null> };
+
 export type FetchAllGameBoardsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -642,19 +648,28 @@ export type FindGameBoardQueryVariables = Exact<{
 
 export type FindGameBoardQuery = { __typename?: 'RootQuery', findGameBoard: { __typename?: 'GameBoard', id: number, createdAt: any, updatedAt: any, userId: number, title: string, categories: Array<string | null> } };
 
-export type FindGameQueryVariables = Exact<{
-  gameId: Scalars['Int']['input'];
-}>;
-
-
-export type FindGameQuery = { __typename?: 'RootQuery', findGame: { __typename?: 'Game', id: number, createdAt: any, updatedAt: any, gameBoardId: number, userId: number, roomCode: string } };
+export type GameDetailsFragment = { __typename?: 'Game', id: number, createdAt: any, updatedAt: any, gameBoardId: number, userId: number, roomCode: string };
 
 export type FetchGamesFromUserQueryVariables = Exact<{
   userId: Scalars['Int']['input'];
 }>;
 
 
-export type FetchGamesFromUserQuery = { __typename?: 'RootQuery', fetchGamesFromUser: Array<{ __typename?: 'Game', id: number, createdAt: any, updatedAt: any, userId: number, gameBoardId: number, roomCode: string }> };
+export type FetchGamesFromUserQuery = { __typename?: 'RootQuery', fetchGamesFromUser: Array<{ __typename?: 'Game', id: number, createdAt: any, updatedAt: any, gameBoardId: number, userId: number, roomCode: string, gameBoard: { __typename?: 'GameBoard', title: string, categories: Array<string | null> } }> };
+
+export type FullGameQueryVariables = Exact<{
+  gameId: Scalars['Int']['input'];
+}>;
+
+
+export type FullGameQuery = { __typename?: 'RootQuery', findGame: { __typename?: 'Game', id: number, createdAt: any, updatedAt: any, gameBoardId: number, userId: number, roomCode: string, user: { __typename?: 'User', id: number, username: string, firebaseUid: string, createdAt: any, updatedAt: any }, gameBoard: { __typename?: 'GameBoard', id: number, title: string, categories: Array<string | null>, userId: number, createdAt: any, updatedAt: any, user: { __typename?: 'User', id: number, username: string, firebaseUid: string, createdAt: any, updatedAt: any } } } };
+
+export type FindGameQueryVariables = Exact<{
+  gameId: Scalars['Int']['input'];
+}>;
+
+
+export type FindGameQuery = { __typename?: 'RootQuery', findGame: { __typename?: 'Game', id: number, createdAt: any, updatedAt: any, gameBoardId: number, userId: number, roomCode: string } };
 
 export type FindGameFromRoomCodeQueryVariables = Exact<{
   roomCode: Scalars['String']['input'];
@@ -677,6 +692,8 @@ export type FetchPlayersFromGameQueryVariables = Exact<{
 
 export type FetchPlayersFromGameQuery = { __typename?: 'RootQuery', fetchPlayersFromGame: Array<{ __typename?: 'Player', id: number, createdAt: any, updatedAt: any, playerName: string, gameId: number, score: number }> };
 
+export type QuestionFieldsFragment = { __typename?: 'Question', id: number, createdAt: any, updatedAt: any, userId: number, question: string, answer: string };
+
 export type FetchAllQuestionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
@@ -695,6 +712,8 @@ export type FindQuestionQueryVariables = Exact<{
 
 
 export type FindQuestionQuery = { __typename?: 'RootQuery', findQuestion: { __typename?: 'Question', id: number, createdAt: any, updatedAt: any, userId: number, question: string, answer: string } };
+
+export type UserDetailsFragment = { __typename?: 'User', id: number, firebaseUid: string, username: string, createdAt: any, updatedAt: any };
 
 export type FetchAllUsersQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -715,7 +734,45 @@ export type FindUserByFirebaseUidQueryVariables = Exact<{
 
 export type FindUserByFirebaseUidQuery = { __typename?: 'RootQuery', findUserByFirebaseUid?: { __typename?: 'User', id: number, firebaseUid: string, username: string, createdAt: any, updatedAt: any } | null };
 
-
+export const GameBoardDetailsFragmentDoc = gql`
+    fragment GameBoardDetails on GameBoard {
+  id
+  createdAt
+  updatedAt
+  userId
+  title
+  categories
+}
+    `;
+export const GameDetailsFragmentDoc = gql`
+    fragment GameDetails on Game {
+  id
+  createdAt
+  updatedAt
+  gameBoardId
+  userId
+  roomCode
+}
+    `;
+export const QuestionFieldsFragmentDoc = gql`
+    fragment QuestionFields on Question {
+  id
+  createdAt
+  updatedAt
+  userId
+  question
+  answer
+}
+    `;
+export const UserDetailsFragmentDoc = gql`
+    fragment UserDetails on User {
+  id
+  firebaseUid
+  username
+  createdAt
+  updatedAt
+}
+    `;
 export const CreateMappingDocument = gql`
     mutation CreateMapping($input: CreateGameBoardMappingInput!) {
   createMapping(input: $input) {
@@ -1450,15 +1507,10 @@ export type FetchGameBoardMappingsQueryResult = Apollo.QueryResult<FetchGameBoar
 export const FetchAllGameBoardsDocument = gql`
     query fetchAllGameBoards {
   fetchAllGameBoards {
-    id
-    createdAt
-    updatedAt
-    userId
-    title
-    categories
+    ...GameBoardDetails
   }
 }
-    `;
+    ${GameBoardDetailsFragmentDoc}`;
 
 /**
  * __useFetchAllGameBoardsQuery__
@@ -1494,15 +1546,10 @@ export type FetchAllGameBoardsQueryResult = Apollo.QueryResult<FetchAllGameBoard
 export const FetchGameBoardsFromUserDocument = gql`
     query FetchGameBoardsFromUser($userId: Int!) {
   fetchGameBoardsFromUser(userId: $userId) {
-    id
-    createdAt
-    updatedAt
-    userId
-    title
-    categories
+    ...GameBoardDetails
   }
 }
-    `;
+    ${GameBoardDetailsFragmentDoc}`;
 
 /**
  * __useFetchGameBoardsFromUserQuery__
@@ -1539,15 +1586,10 @@ export type FetchGameBoardsFromUserQueryResult = Apollo.QueryResult<FetchGameBoa
 export const FindGameBoardDocument = gql`
     query FindGameBoard($gameBoardId: Int!) {
   findGameBoard(gameBoardId: $gameBoardId) {
-    id
-    createdAt
-    updatedAt
-    userId
-    title
-    categories
+    ...GameBoardDetails
   }
 }
-    `;
+    ${GameBoardDetailsFragmentDoc}`;
 
 /**
  * __useFindGameBoardQuery__
@@ -1581,6 +1623,112 @@ export type FindGameBoardQueryHookResult = ReturnType<typeof useFindGameBoardQue
 export type FindGameBoardLazyQueryHookResult = ReturnType<typeof useFindGameBoardLazyQuery>;
 export type FindGameBoardSuspenseQueryHookResult = ReturnType<typeof useFindGameBoardSuspenseQuery>;
 export type FindGameBoardQueryResult = Apollo.QueryResult<FindGameBoardQuery, FindGameBoardQueryVariables>;
+export const FetchGamesFromUserDocument = gql`
+    query FetchGamesFromUser($userId: Int!) {
+  fetchGamesFromUser(userId: $userId) {
+    ...GameDetails
+    gameBoard {
+      title
+      categories
+    }
+  }
+}
+    ${GameDetailsFragmentDoc}`;
+
+/**
+ * __useFetchGamesFromUserQuery__
+ *
+ * To run a query within a React component, call `useFetchGamesFromUserQuery` and pass it any options that fit your needs.
+ * When your component renders, `useFetchGamesFromUserQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useFetchGamesFromUserQuery({
+ *   variables: {
+ *      userId: // value for 'userId'
+ *   },
+ * });
+ */
+export function useFetchGamesFromUserQuery(baseOptions: Apollo.QueryHookOptions<FetchGamesFromUserQuery, FetchGamesFromUserQueryVariables> & ({ variables: FetchGamesFromUserQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<FetchGamesFromUserQuery, FetchGamesFromUserQueryVariables>(FetchGamesFromUserDocument, options);
+      }
+export function useFetchGamesFromUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<FetchGamesFromUserQuery, FetchGamesFromUserQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<FetchGamesFromUserQuery, FetchGamesFromUserQueryVariables>(FetchGamesFromUserDocument, options);
+        }
+export function useFetchGamesFromUserSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<FetchGamesFromUserQuery, FetchGamesFromUserQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<FetchGamesFromUserQuery, FetchGamesFromUserQueryVariables>(FetchGamesFromUserDocument, options);
+        }
+export type FetchGamesFromUserQueryHookResult = ReturnType<typeof useFetchGamesFromUserQuery>;
+export type FetchGamesFromUserLazyQueryHookResult = ReturnType<typeof useFetchGamesFromUserLazyQuery>;
+export type FetchGamesFromUserSuspenseQueryHookResult = ReturnType<typeof useFetchGamesFromUserSuspenseQuery>;
+export type FetchGamesFromUserQueryResult = Apollo.QueryResult<FetchGamesFromUserQuery, FetchGamesFromUserQueryVariables>;
+export const FullGameDocument = gql`
+    query FullGame($gameId: Int!) {
+  findGame(gameId: $gameId) {
+    ...GameDetails
+    user {
+      id
+      username
+      firebaseUid
+      createdAt
+      updatedAt
+    }
+    gameBoard {
+      id
+      title
+      categories
+      userId
+      createdAt
+      updatedAt
+      user {
+        id
+        username
+        firebaseUid
+        createdAt
+        updatedAt
+      }
+    }
+  }
+}
+    ${GameDetailsFragmentDoc}`;
+
+/**
+ * __useFullGameQuery__
+ *
+ * To run a query within a React component, call `useFullGameQuery` and pass it any options that fit your needs.
+ * When your component renders, `useFullGameQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useFullGameQuery({
+ *   variables: {
+ *      gameId: // value for 'gameId'
+ *   },
+ * });
+ */
+export function useFullGameQuery(baseOptions: Apollo.QueryHookOptions<FullGameQuery, FullGameQueryVariables> & ({ variables: FullGameQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<FullGameQuery, FullGameQueryVariables>(FullGameDocument, options);
+      }
+export function useFullGameLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<FullGameQuery, FullGameQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<FullGameQuery, FullGameQueryVariables>(FullGameDocument, options);
+        }
+export function useFullGameSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<FullGameQuery, FullGameQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<FullGameQuery, FullGameQueryVariables>(FullGameDocument, options);
+        }
+export type FullGameQueryHookResult = ReturnType<typeof useFullGameQuery>;
+export type FullGameLazyQueryHookResult = ReturnType<typeof useFullGameLazyQuery>;
+export type FullGameSuspenseQueryHookResult = ReturnType<typeof useFullGameSuspenseQuery>;
+export type FullGameQueryResult = Apollo.QueryResult<FullGameQuery, FullGameQueryVariables>;
 export const FindGameDocument = gql`
     query FindGame($gameId: Int!) {
   findGame(gameId: $gameId) {
@@ -1626,51 +1774,6 @@ export type FindGameQueryHookResult = ReturnType<typeof useFindGameQuery>;
 export type FindGameLazyQueryHookResult = ReturnType<typeof useFindGameLazyQuery>;
 export type FindGameSuspenseQueryHookResult = ReturnType<typeof useFindGameSuspenseQuery>;
 export type FindGameQueryResult = Apollo.QueryResult<FindGameQuery, FindGameQueryVariables>;
-export const FetchGamesFromUserDocument = gql`
-    query FetchGamesFromUser($userId: Int!) {
-  fetchGamesFromUser(userId: $userId) {
-    id
-    createdAt
-    updatedAt
-    userId
-    gameBoardId
-    roomCode
-  }
-}
-    `;
-
-/**
- * __useFetchGamesFromUserQuery__
- *
- * To run a query within a React component, call `useFetchGamesFromUserQuery` and pass it any options that fit your needs.
- * When your component renders, `useFetchGamesFromUserQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useFetchGamesFromUserQuery({
- *   variables: {
- *      userId: // value for 'userId'
- *   },
- * });
- */
-export function useFetchGamesFromUserQuery(baseOptions: Apollo.QueryHookOptions<FetchGamesFromUserQuery, FetchGamesFromUserQueryVariables> & ({ variables: FetchGamesFromUserQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<FetchGamesFromUserQuery, FetchGamesFromUserQueryVariables>(FetchGamesFromUserDocument, options);
-      }
-export function useFetchGamesFromUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<FetchGamesFromUserQuery, FetchGamesFromUserQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<FetchGamesFromUserQuery, FetchGamesFromUserQueryVariables>(FetchGamesFromUserDocument, options);
-        }
-export function useFetchGamesFromUserSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<FetchGamesFromUserQuery, FetchGamesFromUserQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<FetchGamesFromUserQuery, FetchGamesFromUserQueryVariables>(FetchGamesFromUserDocument, options);
-        }
-export type FetchGamesFromUserQueryHookResult = ReturnType<typeof useFetchGamesFromUserQuery>;
-export type FetchGamesFromUserLazyQueryHookResult = ReturnType<typeof useFetchGamesFromUserLazyQuery>;
-export type FetchGamesFromUserSuspenseQueryHookResult = ReturnType<typeof useFetchGamesFromUserSuspenseQuery>;
-export type FetchGamesFromUserQueryResult = Apollo.QueryResult<FetchGamesFromUserQuery, FetchGamesFromUserQueryVariables>;
 export const FindGameFromRoomCodeDocument = gql`
     query FindGameFromRoomCode($roomCode: String!) {
   findGameByRoomCode(roomCode: $roomCode) {
@@ -1809,15 +1912,10 @@ export type FetchPlayersFromGameQueryResult = Apollo.QueryResult<FetchPlayersFro
 export const FetchAllQuestionsDocument = gql`
     query fetchAllQuestions {
   fetchAllQuestions {
-    id
-    createdAt
-    updatedAt
-    userId
-    question
-    answer
+    ...QuestionFields
   }
 }
-    `;
+    ${QuestionFieldsFragmentDoc}`;
 
 /**
  * __useFetchAllQuestionsQuery__
@@ -1853,15 +1951,10 @@ export type FetchAllQuestionsQueryResult = Apollo.QueryResult<FetchAllQuestionsQ
 export const FetchQuestionsFromIdsDocument = gql`
     query fetchQuestionsFromIds($questionIds: [Int!]!) {
   fetchQuestionsFromIds(questionIds: $questionIds) {
-    id
-    createdAt
-    updatedAt
-    userId
-    question
-    answer
+    ...QuestionFields
   }
 }
-    `;
+    ${QuestionFieldsFragmentDoc}`;
 
 /**
  * __useFetchQuestionsFromIdsQuery__
@@ -1898,15 +1991,10 @@ export type FetchQuestionsFromIdsQueryResult = Apollo.QueryResult<FetchQuestions
 export const FindQuestionDocument = gql`
     query findQuestion($questionId: Int!) {
   findQuestion(questionId: $questionId) {
-    id
-    createdAt
-    updatedAt
-    userId
-    question
-    answer
+    ...QuestionFields
   }
 }
-    `;
+    ${QuestionFieldsFragmentDoc}`;
 
 /**
  * __useFindQuestionQuery__
@@ -1943,14 +2031,10 @@ export type FindQuestionQueryResult = Apollo.QueryResult<FindQuestionQuery, Find
 export const FetchAllUsersDocument = gql`
     query fetchAllUsers {
   fetchAllUsers {
-    id
-    firebaseUid
-    username
-    createdAt
-    updatedAt
+    ...UserDetails
   }
 }
-    `;
+    ${UserDetailsFragmentDoc}`;
 
 /**
  * __useFetchAllUsersQuery__
@@ -1986,14 +2070,10 @@ export type FetchAllUsersQueryResult = Apollo.QueryResult<FetchAllUsersQuery, Fe
 export const FindUserDocument = gql`
     query findUser($userId: Int!) {
   findUser(userId: $userId) {
-    id
-    firebaseUid
-    username
-    createdAt
-    updatedAt
+    ...UserDetails
   }
 }
-    `;
+    ${UserDetailsFragmentDoc}`;
 
 /**
  * __useFindUserQuery__
@@ -2030,14 +2110,10 @@ export type FindUserQueryResult = Apollo.QueryResult<FindUserQuery, FindUserQuer
 export const FindUserByFirebaseUidDocument = gql`
     query findUserByFirebaseUid($firebaseUid: String!) {
   findUserByFirebaseUid(firebaseUid: $firebaseUid) {
-    id
-    firebaseUid
-    username
-    createdAt
-    updatedAt
+    ...UserDetails
   }
 }
-    `;
+    ${UserDetailsFragmentDoc}`;
 
 /**
  * __useFindUserByFirebaseUidQuery__

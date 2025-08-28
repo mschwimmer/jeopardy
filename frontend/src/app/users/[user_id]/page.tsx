@@ -1,17 +1,8 @@
 // src/app/users/[user_id]/page.tsx
 
-import { List, ListItem } from "@mui/material";
 import styles from "../../styles/common.module.css";
 import pageStyles from "./page.module.css";
-import { UserGameBoardDashboard } from "./UserGameBoardDashboard";
-import { NewGameBoard } from "./NewGameBoard";
-import { UserGamesDasboard } from "./UserGamesDasboard";
-import UserCard from "./UserCard";
-import { Game, GameBoard } from "@/__generated__/types";
-import {
-  fetchGamesFromUser,
-  fetchGameBoardsFromUser,
-} from "@/app/lib/serverQueries";
+import UserPageComponent from "./UserPageComponent";
 
 export default async function UserPage({
   params,
@@ -19,29 +10,11 @@ export default async function UserPage({
   params: Promise<{ user_id: string }>;
 }) {
   const { user_id } = await params;
-  const games: Game[] = await fetchGamesFromUser(parseInt(user_id, 10));
-  const boards: GameBoard[] = await fetchGameBoardsFromUser(
-    parseInt(user_id, 10)
-  );
 
   return (
     <div className={`${pageStyles.page} ${styles.page}`}>
       <main className={styles.main}>
-        <h1>User Page</h1>
-        <List>
-          <ListItem>
-            <UserCard user_id={user_id}></UserCard>
-          </ListItem>
-          <ListItem>
-            <NewGameBoard user_id={user_id} />
-          </ListItem>
-          <ListItem>
-            <UserGameBoardDashboard boards={boards} />
-          </ListItem>
-          <ListItem>
-            <UserGamesDasboard games={games} />
-          </ListItem>
-        </List>
+        <UserPageComponent user_id={user_id} />
       </main>
     </div>
   );

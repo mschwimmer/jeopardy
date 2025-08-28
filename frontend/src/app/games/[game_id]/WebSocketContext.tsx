@@ -4,7 +4,8 @@
 
 "use client";
 import React, { createContext, useEffect, useRef, useState } from "react";
-import { useAuth } from "@/app/lib/AuthProvider";
+// import { useAuth } from "@/app/lib/AuthProvider";
+import { useBackendUser } from "@/app/lib/BackendUserContext";
 
 // Types of messages the server can send or receive
 export type ServerMessageType = "buzz" | "reset" | "status";
@@ -76,7 +77,7 @@ export const WebsocketProvider = ({
   const [isReady, setIsReady] = useState(false);
   const [val, setVal] = useState<ServerMessage | null>(null);
   const ws = useRef<WebSocket | null>(null);
-  const { backendUser } = useAuth();
+  const { backendUser } = useBackendUser();
 
   const sendStructured = (
     type: ServerMessageType,

@@ -1,13 +1,6 @@
-import pageStyles from "./page.module.css";
 import styles from "../../styles/common.module.css";
 import * as React from "react";
-import GameBoardGrid from "./GameBoardGrid";
-import Scoreboard from "./Scoreboard";
-import { HostBuzzer } from "./HostBuzzer";
-import { GameContextProvider } from "./GameContext";
-import { fetchGame, fetchGameBoard } from "@/app/lib/serverQueries";
-import { Game, GameBoard } from "@/__generated__/types";
-import { WebsocketProvider } from "./WebSocketContext";
+import GamePageContent from "./GamePageContent";
 
 export default async function GamePage({
   params,
@@ -17,40 +10,11 @@ export default async function GamePage({
   const { game_id } = await params;
   const gameId = parseInt(game_id, 10);
 
-  try {
-    const game: Game = await fetchGame(gameId);
-    const gameBoard: GameBoard = await fetchGameBoard(game.gameBoardId);
-
-    return (
-      <div className={styles.page}>
-        <main className={styles.main}>
-          <GameContextProvider>
-            <WebsocketProvider room_code={game.roomCode}>
-              <HostBuzzer room_code={game.roomCode} />
-              <div className={pageStyles.gameContainer}>
-                <Scoreboard
-                  className={pageStyles.scoreboard}
-                  game_id={game_id}
-                />
-                <GameBoardGrid
-                  gameBoard={gameBoard}
-                  className={pageStyles.gameBoard}
-                />
-              </div>
-            </WebsocketProvider>
-          </GameContextProvider>
-        </main>
-      </div>
-    );
-  } catch (error) {
-    console.error("Error fetching game info:", error);
-
-    return (
-      <div className={styles.page}>
-        <main className={styles.main}>
-          <p>Failed to load the game info. Please try again later.</p>
-        </main>
-      </div>
-    );
-  }
+  return (
+    <div className={styles.page}>
+      <main className={styles.main}>
+        <GamePageContent gameId={gameId} />
+      </main>
+    </div>
+  );
 }
