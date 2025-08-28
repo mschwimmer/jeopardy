@@ -29,6 +29,7 @@ impl GameMutation {
         let new_game: NewGame = NewGame {
             user_id: input.user_id,
             game_board_id: input.game_board_id,
+            room_code: "default".to_string(),
         };
         let game: Game = Game::create(&mut conn, new_game).await?;
 

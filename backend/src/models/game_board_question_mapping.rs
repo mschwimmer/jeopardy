@@ -99,11 +99,11 @@ impl GameBoardQuestionMapping {
             .await
     }
 
-    /// Fetch all mappings for a specific game board.
+    /// Fetch all mappings for a specific question.
     ///
     /// # Arguments
     /// * `conn` - A mutable reference to an async PostgreSQL connection.
-    /// * `board_id` - The ID of the game board.
+    /// * `question_id` - The ID of the question.
     ///
     /// # Returns
     /// A `Result` containing a vector of mappings or a Diesel error.

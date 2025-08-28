@@ -1,12 +1,14 @@
+// src/app/join/page.tsx
+
 import styles from "../styles/common.module.css";
 import pageStyles from "./page.module.css";
-import SignIn from "./SignIn";
+import JoinForm from "./JoinForm";
 
-export default function SignInPage() {
+export default function JoinPage() {
   return (
     <div className={`${pageStyles.page} ${styles.page}`}>
       <main className={styles.main}>
-        <SignIn />
+        <JoinForm />
       </main>
     </div>
   );

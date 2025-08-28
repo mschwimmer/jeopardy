@@ -6,7 +6,7 @@ These are notes which explain the tools we chose and why. We're writing our back
 
 ### diesel
 
-Disel is an ORM and Querybuilder for Rust. It allows us to connect to and interact with our PostgresDB. We will be using diesel migrations to format our database. Diesel works with Axum, and GraphQL.
+Diesel is an ORM and Querybuilder for Rust. It allows us to connect to and interact with our PostgresDB. We will be using diesel migrations to format our database. Diesel works with Axum, and GraphQL.
 
 ### diesel migrations
 

@@ -1,4 +1,4 @@
-// /app/user/[user_uuid]/layout.tsx
+// /app/user/[user_id]/layout.tsx
 "use client";
 
 import React from "react";

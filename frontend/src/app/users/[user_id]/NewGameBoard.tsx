@@ -7,11 +7,11 @@ import { useRouter, usePathname } from "next/navigation";
 import { useCreateGameBoardMutation } from "@/__generated__/graphql";
 
 interface NewGameBoardProps {
-  user_uuid: string;
+  user_id: string;
 }
 
-export const NewGameBoard: React.FC<NewGameBoardProps> = ({ user_uuid }) => {
-  const userId = parseInt(user_uuid, 10);
+export const NewGameBoard: React.FC<NewGameBoardProps> = ({ user_id }) => {
+  const userId = parseInt(user_id, 10);
   const [gameBoardTitle, setGameBoardTitle] = useState("New Gameboard");
   const [createGameBoard] = useCreateGameBoardMutation();
   const router = useRouter();

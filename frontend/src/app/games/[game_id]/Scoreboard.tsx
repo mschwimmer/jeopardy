@@ -12,16 +12,15 @@ import { Fab, Tooltip } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import AddIcon from "@mui/icons-material/Add";
 import { Remove } from "@mui/icons-material";
-import { useGameContext } from "./GameContext";
+// import { useGameContext } from "./GameContext";
 import styles from "./page.module.css";
 
 interface ScoreboardProps {
   className?: string;
+  gameId: number;
 }
 
-const Scoreboard: React.FC<ScoreboardProps> = ({ className }) => {
-  const { game_uuid } = useGameContext();
-  const gameId = parseInt(game_uuid, 10);
+const Scoreboard: React.FC<ScoreboardProps> = ({ className, gameId }) => {
   const {
     data,
     loading,

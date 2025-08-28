@@ -1,4 +1,4 @@
-// src/app/users/[user_uuid]/boards/[board_uuid]/GameBoardGrid.tsx
+// src/app/users/[user_id]/boards/[board_id]/GameBoardGrid.tsx
 
 "use client";
 import { useState, ReactElement, useEffect } from "react";

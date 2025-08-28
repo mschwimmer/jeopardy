@@ -1,4 +1,4 @@
-// src/app/games/[game_uuid]/GameBoardGrid.tsx
+// src/app/games/[game_id]/GameBoardGrid.tsx
 
 "use client";
 import { GameBoard, GameBoardQuestion } from "@/__generated__/types";

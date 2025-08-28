@@ -7,11 +7,11 @@ import { useFindUserQuery } from "@/__generated__/graphql";
 import QueryResult from "../../components/query-result";
 
 interface UserCardProps {
-  user_uuid: string;
+  user_id: string;
 }
 
-const UserCard: React.FC<UserCardProps> = ({ user_uuid }) => {
-  const userId = parseInt(user_uuid, 10);
+const UserCard: React.FC<UserCardProps> = ({ user_id }) => {
+  const userId = parseInt(user_id, 10);
   const { data, loading, error } = useFindUserQuery({
     variables: { userId },
   });

@@ -1,4 +1,4 @@
-// src/app/users/[user_uuid]/board/[board_uuid]/page.tsx
+// src/app/users/[user_id]/board/[board_id]/page.tsx
 
 import styles from "../../../../styles/common.module.css";
 import pageStyles from "./page.module.css";
@@ -8,11 +8,11 @@ import { fetchGameBoard } from "@/app/lib/serverQueries";
 export default async function BoardPage({
   params,
 }: {
-  params: Promise<{ user_uuid: string; board_uuid: string }>;
+  params: Promise<{ user_id: string; board_id: string }>;
 }) {
-  const { user_uuid, board_uuid } = await params;
-  const gameBoardId = parseInt(board_uuid, 10);
-  const userId = parseInt(user_uuid, 10);
+  const { user_id, board_id } = await params;
+  const gameBoardId = parseInt(board_id, 10);
+  const userId = parseInt(user_id, 10);
 
   try {
     const gameBoard = await fetchGameBoard(gameBoardId);

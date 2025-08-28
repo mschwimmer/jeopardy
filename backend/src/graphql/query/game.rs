@@ -23,6 +23,20 @@ impl GameQuery {
         Ok(game)
     }
 
+    /// Find a single game by room code
+    async fn find_game_by_room_code(&self, ctx: &Context<'_>, room_code: String) -> Result<Game> {
+        let pool = ctx.data::<DBPool>().map_err(|e| {
+            async_graphql::Error::new(format!("Cannot get DBPool from context: {:?}", e))
+        })?;
+        let mut conn = pool
+            .get()
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Failed to get connection: {}", e)))?;
+
+        let game: Game = Game::find_by_room_code(&mut conn, room_code).await?;
+        Ok(game)
+    }
+
     /// Fetch all games from user
     async fn fetch_games_from_user(&self, ctx: &Context<'_>, user_id: i64) -> Result<Vec<Game>> {
         let pool = ctx.data::<DBPool>().map_err(|e| {

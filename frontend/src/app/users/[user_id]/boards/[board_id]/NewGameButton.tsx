@@ -81,8 +81,8 @@ const NewGameButton: React.FC<NewGameButtonProps> = ({
         const newGameResult = await createNewGame({
           variables: { input: { userId, gameBoardId: gameBoard.id } },
         });
-        const gameUuid = newGameResult?.data?.createGame.id;
-        router.push(`/games/${gameUuid}`);
+        const gameId = newGameResult?.data?.createGame.id;
+        router.push(`/games/${gameId}`);
       } catch (error) {
         console.error("Error creating new game:", error);
         alert("An error occured while creating the game");

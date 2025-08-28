@@ -3,16 +3,31 @@
 import { DataGrid } from "@mui/x-data-grid";
 import { Paper, Typography } from "@mui/material";
 import Link from "next/link";
-import { GameBoard } from "@/__generated__/types";
+import {
+  GameBoardDetailsFragment,
+  useFetchGameBoardsFromUserQuery,
+} from "@/__generated__/graphql";
 
-// Define columns for DataGrid
-interface UserGameBoardDashboardProps {
-  boards: GameBoard[];
-}
+export const UserGameBoardDashboard = ({ user_id }: { user_id: string }) => {
+  const {
+    data: gameBoardData,
+    loading: gameBoardLoading,
+    error: gameBoardError,
+  } = useFetchGameBoardsFromUserQuery({
+    variables: { userId: parseInt(user_id, 10) },
+  });
 
-export const UserGameBoardDashboard: React.FC<UserGameBoardDashboardProps> = ({
-  boards,
-}) => {
+  if (gameBoardLoading) return <p>Loading...</p>;
+  if (gameBoardError) {
+    console.error("Error loading game boards:", gameBoardError);
+    return <p>Failed to load game boards.</p>;
+  }
+  if (!gameBoardData?.fetchGameBoardsFromUser) return <p>No boards found.</p>;
+
+  // TODO figure out how to use a fragment type for this?
+  const boards: GameBoardDetailsFragment[] =
+    gameBoardData.fetchGameBoardsFromUser;
+
   return (
     <div>
       <Typography variant="h4" gutterBottom>
@@ -35,12 +50,6 @@ export const UserGameBoardDashboard: React.FC<UserGameBoardDashboardProps> = ({
               ),
             },
             {
-              field: "user",
-              headerName: "Author",
-              width: 150,
-              renderCell: (params) => <div>{params.row.user.username}</div>,
-            },
-            {
               field: "createdAt",
               headerName: "Created",
               width: 100,
@@ -53,6 +62,16 @@ export const UserGameBoardDashboard: React.FC<UserGameBoardDashboardProps> = ({
               width: 100,
               valueFormatter: (value: Date) =>
                 new Date(value).toLocaleDateString(),
+            },
+            {
+              field: "categories",
+              headerName: "Categories",
+              width: 300,
+              renderCell: (params) => (
+                <div>
+                  {(params.row.categories ?? []).filter(Boolean).join(" | ")}
+                </div>
+              ),
             },
           ]}
           pageSizeOptions={[5, 10]}

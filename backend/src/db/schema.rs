@@ -29,6 +29,7 @@ diesel::table! {
         updated_at -> Timestamptz,
         user_id -> Int8,
         game_board_id -> Int8,
+        room_code -> Text,
     }
 }
 

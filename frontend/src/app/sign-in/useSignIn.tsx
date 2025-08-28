@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../lib/AuthProvider";
 import { useRouter } from "next/navigation";
-import { findUserByFirebaseUid } from "../lib/serverQueries";
+import { useFindUserByFirebaseUidLazyQuery } from "@/__generated__/graphql";
 import { ApolloError } from "@apollo/client";
 import { FirebaseError } from "firebase/app";
 
@@ -15,14 +15,28 @@ export function useSignIn() {
     message: string;
   } | null>(null);
 
+  // Lazy query so we can fire it after Firebase auth succeeds
+  const [fetchUserByUid] = useFindUserByFirebaseUidLazyQuery();
+
   const handleSignIn = async (email: string, password: string) => {
     setFeedback(null);
     setIsLoading(true);
 
     try {
       const firebaseResult = await signIn(email, password);
-      const backendUser = await findUserByFirebaseUid(firebaseResult.user.uid);
-      router.push(`/users/${backendUser.id}`);
+
+      const { data } = await fetchUserByUid({
+        variables: { firebaseUid: firebaseResult.user.uid },
+        fetchPolicy: "network-only",
+      });
+
+      const backendUser = data?.findUserByFirebaseUid;
+      if (backendUser?.id != null) {
+        router.push(`/users/${backendUser.id}`);
+      } else {
+        // If your backend user does not exist yet, route to sign-up (or show an error).
+        router.push("/sign-up");
+      }
     } catch (error) {
       console.error("Error signing in:", error);
 
@@ -72,9 +86,14 @@ export function useSignIn() {
         throw new Error("No user information returned from Google");
       }
 
-      const backendUser = await findUserByFirebaseUid(firebaseResult.user.uid);
+      const { data } = await fetchUserByUid({
+        variables: { firebaseUid: firebaseResult.user.uid },
+        fetchPolicy: "network-only",
+      });
 
-      if (backendUser) {
+      const backendUser = data?.findUserByFirebaseUid;
+
+      if (backendUser?.id != null) {
         router.push(`/users/${backendUser.id}`);
       } else {
         router.push("/sign-up");

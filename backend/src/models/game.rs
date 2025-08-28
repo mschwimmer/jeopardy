@@ -9,6 +9,7 @@ use chrono::{DateTime, Utc};
 use derive_builder::Builder;
 use diesel::prelude::*;
 use diesel_async::{AsyncPgConnection, RunQueryDsl};
+use rand::distr::{Alphanumeric, SampleString};
 
 /// Represents a game in the application.
 ///
@@ -27,6 +28,7 @@ pub struct Game {
     pub updated_at: DateTime<Utc>,
     pub user_id: i64,
     pub game_board_id: i64,
+    pub room_code: String,
 }
 
 /// Represents a new game to be inserted into the database.
@@ -35,6 +37,7 @@ pub struct Game {
 pub struct NewGame {
     pub user_id: i64,
     pub game_board_id: i64,
+    pub room_code: String,
 }
 
 impl Game {
@@ -51,6 +54,24 @@ impl Game {
         game_id: i64,
     ) -> Result<Self, diesel::result::Error> {
         games::table.find(game_id).first(conn).await
+    }
+
+    /// Find a game by its unique room code.
+    ///
+    /// # Arguments
+    /// * `conn` - A mutable reference to an async PostgreSQL connection.
+    /// * `room_code` - The unique room code of the game to fetch.
+    ///
+    /// # Returns
+    /// A `Result` containing the game or a Diesel error.
+    pub async fn find_by_room_code(
+        conn: &mut AsyncPgConnection,
+        room_code: String,
+    ) -> Result<Self, diesel::result::Error> {
+        games::table
+            .filter(games::room_code.eq(room_code))
+            .first(conn)
+            .await
     }
 
     /// Fetch all games from the database.
@@ -94,10 +115,56 @@ impl Game {
         conn: &mut AsyncPgConnection,
         new_game: NewGame,
     ) -> Result<Self, diesel::result::Error> {
+        // Try to generate a unique room code
+        let room_code = Self::generate_unique_room_code(conn).await?;
+
+        // Insert the game with the generated room code
         diesel::insert_into(games::table)
-            .values(&new_game)
+            .values(
+                &NewGameBuilder::default()
+                    .user_id(new_game.user_id)
+                    .game_board_id(new_game.game_board_id)
+                    .room_code(room_code)
+                    .build()
+                    .expect("Failed to build NewGame"),
+            )
             .get_result(conn)
             .await
+    }
+
+    /// Generate a unique room code for a game.
+    ///
+    /// # Arguments
+    /// * `conn` - A mutable reference to an async PostgreSQL connection.
+    ///
+    /// # Returns
+    /// A `Result` containing a unique room code or a Diesel error.
+    async fn generate_unique_room_code(
+        conn: &mut AsyncPgConnection,
+    ) -> Result<String, diesel::result::Error> {
+        const MAX_ATTEMPTS: usize = 10;
+        const ROOM_CODE_LENGTH: usize = 6;
+
+        for _ in 0..MAX_ATTEMPTS {
+            // Generate a random 6-character alphanumeric room code
+            let room_code: String = Alphanumeric.sample_string(&mut rand::rng(), ROOM_CODE_LENGTH);
+
+            // Check if the room code already exists
+            let existing_count = games::table
+                .filter(games::room_code.eq(&room_code))
+                .count()
+                .get_result::<i64>(conn)
+                .await?;
+
+            // If no existing game with this room code, return it
+            if existing_count == 0 {
+                tracing::debug!("Generated unique room code: {}", room_code);
+                return Ok(room_code);
+            }
+        }
+
+        // If we couldn't generate a unique code after MAX_ATTEMPTS
+        Err(diesel::result::Error::RollbackTransaction)
     }
 }
 

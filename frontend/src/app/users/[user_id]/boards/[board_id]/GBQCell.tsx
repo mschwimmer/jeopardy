@@ -1,4 +1,4 @@
-// src/app/users/[user_uuid]/boards/[board_uuid]/GBQCell.tsx
+// src/app/users/[user_id]/boards/[board_id]/GBQCell.tsx
 
 import React from "react";
 import { GameBoardQuestion } from "@/__generated__/types";

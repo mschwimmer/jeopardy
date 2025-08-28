@@ -50,7 +50,11 @@ pub struct NewGameBoard {
 #[diesel(table_name = game_boards)]
 pub struct UpdateGameBoard {
     pub title: Option<String>,
-    pub categories: Option<Vec<String>>,
+    // Diesel expects `Array<Nullable<Text>>` for the categories column.
+    // Represent this as `Vec<Option<String>>` so NULL elements can be stored if
+    // desired. Using `Vec<String>` would fail to compile since Diesel cannot
+    // automatically convert between `Array<Text>` and `Array<Nullable<Text>>`.
+    pub categories: Option<Vec<Option<String>>>,
 }
 
 impl GameBoard {
@@ -157,7 +161,12 @@ impl GameBoard {
             .first::<Self>(conn)
             .await?;
 
-        game_board.categories[index as usize] = Some(category);
+        let idx = index as usize;
+        if idx >= game_board.categories.len() {
+            return Err(diesel::result::Error::NotFound);
+        }
+
+        game_board.categories[idx] = Some(category);
 
         diesel::update(game_boards::table.find(game_board_id))
             .set(game_boards::categories.eq(game_board.categories))
