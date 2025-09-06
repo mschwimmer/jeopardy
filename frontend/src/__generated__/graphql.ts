@@ -632,7 +632,7 @@ export type GameBoardDetailsFragment = { __typename?: 'GameBoard', id: number, c
 export type FetchAllGameBoardsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type FetchAllGameBoardsQuery = { __typename?: 'RootQuery', fetchAllGameBoards: Array<{ __typename?: 'GameBoard', id: number, createdAt: any, updatedAt: any, userId: number, title: string, categories: Array<string | null> }> };
+export type FetchAllGameBoardsQuery = { __typename?: 'RootQuery', fetchAllGameBoards: Array<{ __typename?: 'GameBoard', id: number, createdAt: any, updatedAt: any, userId: number, title: string, categories: Array<string | null>, user: { __typename?: 'User', username: string } }> };
 
 export type FetchGameBoardsFromUserQueryVariables = Exact<{
   userId: Scalars['Int']['input'];
@@ -1508,6 +1508,9 @@ export const FetchAllGameBoardsDocument = gql`
     query fetchAllGameBoards {
   fetchAllGameBoards {
     ...GameBoardDetails
+    user {
+      username
+    }
   }
 }
     ${GameBoardDetailsFragmentDoc}`;

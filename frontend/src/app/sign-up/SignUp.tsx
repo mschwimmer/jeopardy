@@ -20,7 +20,17 @@ import type {} from "@mui/material/themeCssVarsAugmentation";
 import { ApolloError } from "@apollo/client";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../lib/AuthProvider";
-import { createUser, findUserByFirebaseUid } from "../lib/serverQueries";
+import {
+  useCreateUserMutation,
+  useFindUserByFirebaseUidLazyQuery,
+} from "@/__generated__/graphql";
+import {
+  validateAll,
+  validateField,
+  isValid,
+  FormData as SignUpFormData,
+  Errors,
+} from "./validation";
 
 const Card = styled(MuiCard)(({ theme }) => ({
   // flexShrink: 0,
@@ -70,14 +80,15 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
   const [isLoading, setIsLoading] = React.useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = React.useState(false);
   const [generalError, setGeneralError] = React.useState("");
+  const [createUser] = useCreateUserMutation();
+  const [findUserByUid] = useFindUserByFirebaseUidLazyQuery();
 
-  const [formData, setFormData] = React.useState({
+  const [formData, setFormData] = React.useState<SignUpFormData>({
     username: "",
     email: "",
     password: "",
   });
-
-  const [formErrors, setFormErrors] = React.useState({
+  const [formErrors, setFormErrors] = React.useState<Errors>({
     username: { error: false, message: "" },
     email: { error: false, message: "" },
     password: { error: false, message: "" },
@@ -94,87 +105,45 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
     });
 
     // Real-time validation
-    validateField(name, value);
-  };
-
-  const validateField = (name: string, value: string) => {
-    const newErrors = { ...formErrors };
-
-    switch (name) {
-      case "email":
-        if (!value) {
-          newErrors.email = { error: true, message: "Email is required." };
-        } else if (!/\S+@\S+\.\S+/.test(value)) {
-          newErrors.email = {
-            error: true,
-            message: "Please enter a valid email address.",
-          };
-        } else {
-          newErrors.email = { error: false, message: "" };
-        }
-        break;
-      case "password":
-        if (!value) {
-          newErrors.password = {
-            error: true,
-            message: "Password is required.",
-          };
-        } else if (value.length < 6) {
-          newErrors.password = {
-            error: true,
-            message: "Password must be at least 6 characters long.",
-          };
-        } else {
-          newErrors.password = { error: false, message: "" };
-        }
-        break;
-      case "username":
-        if (!value) {
-          newErrors.username = {
-            error: true,
-            message: "Username is required.",
-          };
-        } else {
-          newErrors.username = { error: false, message: "" };
-        }
-        break;
-    }
-    setFormErrors(newErrors);
-  };
-
-  const validateAllFields = () => {
-    validateField("username", formData.username);
-    validateField("email", formData.email);
-    validateField("password", formData.password);
-
-    return !(
-      formErrors.username.error ||
-      formErrors.email.error ||
-      formErrors.password.error
-    );
+    setFormErrors((p) => ({
+      ...p,
+      [name]: validateField(name as keyof SignUpFormData, value, {
+        ...formData,
+        [name]: value,
+      }),
+    }));
   };
 
   const handleSignUp = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setGeneralError("");
 
-    if (!validateAllFields()) {
-      return;
-    }
+    const errs = validateAll(formData);
+    setFormErrors(errs);
+    if (!isValid(errs)) return;
 
     setIsLoading(true);
 
     try {
-      // console.log("Attempting to sign up with email:", email);
+      // Create user in Firebase Authentication
       const userCredential = await signUp(formData.email, formData.password);
-      // console.log("Firebase sign up successful:", userCredential);
       const firebaseUser = userCredential.user;
-      // const idToken = await firebaseUser.getIdToken();
 
-      // Send the user data to the server
-      const response = await createUser(formData.username, firebaseUser.uid);
-      // console.log("Backend createUser response:", response);
-      router.push("/users/" + response.data?.createUser.id);
+      // Create a new user in backend with firebase UID
+      const { data: newUserData, errors: newUserError } = await createUser({
+        variables: {
+          input: { username: formData.username, firebaseUid: firebaseUser.uid },
+        },
+      });
+      if (newUserError) {
+        throw new Error("Failed to create user in backend: " + newUserError);
+      }
+
+      // On success, redirect to the user's page
+      if (newUserData?.createUser) {
+        // console.log("Backend createUser response:", response);
+        router.push("/users/" + newUserData.createUser.id);
+      }
     } catch (error) {
       console.error("Error during Firebase sign up:", error);
       // Special handling for ApolloError
@@ -210,8 +179,21 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
       }
 
       // First check for existing user with firebase UID
-      const existingUser = await findUserByFirebaseUid(result.user.uid);
-      if (existingUser) {
+      const { data: existingUserData, error: existingUserError } =
+        await findUserByUid({
+          variables: {
+            firebaseUid: result.user.uid,
+          },
+        });
+      if (existingUserError) {
+        throw new Error(
+          "Error checking for existing user: " + existingUserError.message
+        );
+      }
+
+      // If firebase uid returns existing user in our db, redirect to their page
+      if (existingUserData?.findUserByFirebaseUid) {
+        const existingUser = existingUserData.findUserByFirebaseUid;
         console.log(
           `gUser already exists in db with UID ${result.user.uid}`,
           existingUser
@@ -220,14 +202,22 @@ export default function SignUp(props: { disableCustomTheme?: boolean }) {
         return;
       }
 
-      // If no existing user, create a new user
+      // If no existing user in our db for this firebase uid, create one
       const displayName = result.user.displayName ?? "Display Name";
 
-      const userResult = await createUser(displayName, result.user.uid);
-      if (userResult?.id) {
-        router.push(`/users/${userResult.id}`);
-      } else {
-        throw new Error("Failed to create user account");
+      const { data: newUserData, errors: newUserError } = await createUser({
+        variables: {
+          input: { username: displayName, firebaseUid: result.user.uid },
+        },
+      });
+
+      if (newUserError) {
+        throw new Error("Failed to create user in backend: " + newUserError);
+      }
+
+      // On success, redirect to the user's page
+      if (newUserData?.createUser) {
+        router.push(`/users/${newUserData.createUser.id}`);
       }
     } catch (error) {
       console.error("Error during sign-up with Google:", error);
