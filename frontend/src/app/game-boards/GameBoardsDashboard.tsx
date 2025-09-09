@@ -3,20 +3,24 @@
 
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { Box, Typography } from "@mui/material";
-import { GameBoard } from "@/__generated__/types";
+import {
+  FetchAllGameBoardsQuery,
+  useFetchAllGameBoardsQuery,
+} from "@/__generated__/graphql";
 import React from "react";
 
-interface GameBoardsDashboardProps {
-  gameBoards: GameBoard[];
-}
+type GameBoardDisplay = NonNullable<
+  FetchAllGameBoardsQuery["fetchAllGameBoards"]
+>;
 
+// TODO Use username instead of user ID
 const columns: GridColDef[] = [
   { field: "id", headerName: "ID", width: 70 },
   {
     field: "title",
     headerName: "Title",
     flex: 1,
-    minWidth: 300,
+    minWidth: 200,
   },
   {
     field: "categories",
@@ -29,7 +33,12 @@ const columns: GridColDef[] = [
       return categories.filter((cat) => cat != null).join(", ");
     },
   },
-  { field: "userId", headerName: "User ID", width: 100 },
+  {
+    field: "user",
+    headerName: "Author",
+    minWidth: 150,
+    valueGetter: (_, row) => row?.user.username || "Unknown",
+  },
   {
     field: "createdAt",
     headerName: "Created",
@@ -43,9 +52,18 @@ const columns: GridColDef[] = [
   },
 ];
 
-const GameBoardsDashboard: React.FC<GameBoardsDashboardProps> = ({
-  gameBoards,
-}) => {
+export default function GameBoardsDashboard() {
+  const { data, loading, error } = useFetchAllGameBoardsQuery();
+
+  if (loading) return <p>Loading...</p>;
+  if (error) {
+    console.error("Error loading game boards:", error);
+    return <p>Failed to load game boards.</p>;
+  }
+  if (!data?.fetchAllGameBoards) return <p>No boards found.</p>;
+
+  const gameBoards: GameBoardDisplay = data.fetchAllGameBoards;
+
   return (
     <Box sx={{ width: "100%", mt: 2 }}>
       <Typography variant="h4" gutterBottom>
@@ -55,7 +73,7 @@ const GameBoardsDashboard: React.FC<GameBoardsDashboardProps> = ({
         It would sure be cool if you could click on a gameboard and see a little
         preview of it. If only we had the technology.
       </Typography>
-      <DataGrid<GameBoard>
+      <DataGrid<GameBoardDisplay[number]>
         rows={gameBoards}
         columns={columns}
         pageSizeOptions={[5]}
@@ -71,6 +89,4 @@ const GameBoardsDashboard: React.FC<GameBoardsDashboardProps> = ({
       />
     </Box>
   );
-};
-
-export default GameBoardsDashboard;
+}

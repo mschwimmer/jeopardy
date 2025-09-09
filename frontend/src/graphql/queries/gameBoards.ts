@@ -15,6 +15,9 @@ export const ALL_GAMEBOARDS_QUERY = gql`
   query fetchAllGameBoards {
     fetchAllGameBoards {
       ...GameBoardDetails
+      user {
+        username
+      }
     }
   }
 `;
