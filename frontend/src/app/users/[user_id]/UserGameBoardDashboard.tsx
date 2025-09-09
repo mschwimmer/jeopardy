@@ -24,7 +24,6 @@ export const UserGameBoardDashboard = ({ user_id }: { user_id: string }) => {
   }
   if (!gameBoardData?.fetchGameBoardsFromUser) return <p>No boards found.</p>;
 
-  // TODO figure out how to use a fragment type for this?
   const boards: GameBoardDetailsFragment[] =
     gameBoardData.fetchGameBoardsFromUser;
 
