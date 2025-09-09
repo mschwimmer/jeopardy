@@ -697,7 +697,7 @@ export type QuestionFieldsFragment = { __typename?: 'Question', id: number, crea
 export type FetchAllQuestionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type FetchAllQuestionsQuery = { __typename?: 'RootQuery', fetchAllQuestions: Array<{ __typename?: 'Question', id: number, createdAt: any, updatedAt: any, userId: number, question: string, answer: string }> };
+export type FetchAllQuestionsQuery = { __typename?: 'RootQuery', fetchAllQuestions: Array<{ __typename?: 'Question', id: number, createdAt: any, updatedAt: any, userId: number, question: string, answer: string, user: { __typename?: 'User', username: string } }> };
 
 export type FetchQuestionsFromIdsQueryVariables = Exact<{
   questionIds: Array<Scalars['Int']['input']> | Scalars['Int']['input'];
@@ -1916,6 +1916,9 @@ export const FetchAllQuestionsDocument = gql`
     query fetchAllQuestions {
   fetchAllQuestions {
     ...QuestionFields
+    user {
+      username
+    }
   }
 }
     ${QuestionFieldsFragmentDoc}`;
