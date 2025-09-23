@@ -49,5 +49,80 @@
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "typescript": "^5.7.3"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "tabWidth": 2,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "all",
+    "bracketSpacing": true,
+    "arrowParens": "always"
+  },
+  "jest": {
+    "verbose": true,
+    "testEnvironment": "jsdom",
+    "transform": {
+      "^.+\\.(js|jsx|ts|tsx)$": [
+        "babel-jest",
+        {
+          "presets": [
+            "next/babel"
+          ]
+        }
+      ]
+    },
+    "moduleNameMapper": {
+      "\\.(css|less|scss|sass)$": "identity-obj-proxy"
+    },
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/.next/"
+    ],
+    "setupFilesAfterEnv": [
+      "@testing-library/jest-dom"
+    ]
+  },
+  "codegen": {
+    "schema": "http://localhost:8080/graphql",
+    "documents": [
+      "src/graphql/**/*.{ts,tsx}",
+      "!src/__generated__/**/*.{ts,tsx}"
+    ],
+    "generates": {
+      "./src/__generated__/graphql.ts": {
+        "plugins": [
+          "typescript",
+          "typescript-operations",
+          "typescript-react-apollo"
+        ],
+        "config": {
+          "withHooks": true,
+          "withHOC": false,
+          "withComponent": false
+        }
+      },
+      "./src/__generated__/types.ts": {
+        "plugins": [
+          "typescript"
+        ]
+      }
+    }
+  },
+  "eslintConfig": {
+    "extends": [
+      "next/core-web-vitals",
+      "next/typescript",
+      "plugin:react-hooks/recommended"
+    ],
+    "ignorePatterns": [
+      "src/__generated__/**",
+      "src/app/shared-theme/**"
+    ],
+    "settings": {
+      "next": {
+        "rootDir": "."
+      }
+    }
   }
 }
