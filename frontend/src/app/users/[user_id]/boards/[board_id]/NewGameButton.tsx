@@ -4,7 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import Grid from '@mui/material/Grid2';
 import { useCreateGameMutation } from '@/__generated__/graphql';
-import { Button } from '@mui/material';
+import { Button, Tooltip } from '@mui/material';
 
 interface NewGameButtonProps {
   userId: number;
@@ -36,19 +36,29 @@ const NewGameButton: React.FC<NewGameButtonProps> = ({
     }
   };
 
+  const showBlockedTip = !isPlayable && !!blockedReason;
+
   return (
     <Grid size={{ xs: 12, md: 2 }} sx={{ height: '100%' }}>
-      <Button
-        size="large"
-        variant="contained"
-        color="secondary"
-        sx={{ maxHeight: '80%' }}
-        disabled={!isPlayable || loading}
-        title={!isPlayable ? blockedReason : undefined}
-        onClick={() => handleClickNewGame()}
+      <Tooltip
+        title={showBlockedTip ? blockedReason : ''}
+        disableHoverListener={!showBlockedTip}
+        describeChild
       >
-        {loading ? 'Creating...' : 'New Game'}
-      </Button>
+        <span style={{ display: 'inline-block', width: '100%' }}>
+          <Button
+            size="large"
+            variant="contained"
+            color="secondary"
+            sx={{ maxHeight: '80%' }}
+            disabled={!isPlayable || loading}
+            onClick={() => handleClickNewGame()}
+            fullWidth
+          >
+            {loading ? 'Creating...' : 'New Game'}
+          </Button>
+        </span>
+      </Tooltip>
     </Grid>
   );
 };
