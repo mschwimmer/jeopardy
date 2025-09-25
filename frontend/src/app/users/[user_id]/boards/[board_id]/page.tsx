@@ -1,9 +1,8 @@
-// src/app/users/[user_id]/board/[board_id]/page.tsx
+// src/app/users/[user_id]/boards/[board_id]/page.tsx
 
-import styles from "../../../../styles/common.module.css";
-import pageStyles from "./page.module.css";
-import GameBoardGrid from "./GameBoardGrid";
-import { fetchGameBoard } from "@/app/lib/serverQueries";
+import styles from '../../../../styles/common.module.css';
+import pageStyles from './page.module.css';
+import UserGameBoardPageComponent from './UserGameBoardPageComponent';
 
 export default async function BoardPage({
   params,
@@ -11,28 +10,12 @@ export default async function BoardPage({
   params: Promise<{ user_id: string; board_id: string }>;
 }) {
   const { user_id, board_id } = await params;
-  const gameBoardId = parseInt(board_id, 10);
-  const userId = parseInt(user_id, 10);
 
-  try {
-    const gameBoard = await fetchGameBoard(gameBoardId);
-
-    return (
-      <div className={`${pageStyles.page} ${styles.page}`}>
-        <main className={styles.main}>
-          <GameBoardGrid gameBoard={gameBoard} userId={userId} />
-        </main>
-      </div>
-    );
-  } catch (error) {
-    console.error("Error fetching game board:", error);
-
-    return (
-      <div className={styles.page}>
-        <main className={styles.main}>
-          <p>Failed to load the game board. Please try again later.</p>
-        </main>
-      </div>
-    );
-  }
+  return (
+    <div className={`${pageStyles.page} ${styles.page}`}>
+      <main className={styles.main}>
+        <UserGameBoardPageComponent user_id={user_id} game_board_id={board_id} />
+      </main>
+    </div>
+  );
 }

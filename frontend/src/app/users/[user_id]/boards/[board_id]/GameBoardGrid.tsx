@@ -1,25 +1,23 @@
 // src/app/users/[user_id]/boards/[board_id]/GameBoardGrid.tsx
 
-"use client";
-import { useState, ReactElement, useEffect } from "react";
+'use client';
+import { useState, ReactElement, useEffect, useMemo } from 'react';
 import {
   useFetchGbQsQuery,
   useUpdateMappingMutation,
   FetchGbQsDocument,
-} from "@/__generated__/graphql";
-import {
-  GameBoard,
-  GameBoardQuestion,
-  UpdateGameBoardMappingInput,
-} from "@/__generated__/types";
-import Title from "./Title";
-import Grid from "@mui/material/Grid2";
-import { Paper } from "@mui/material";
-import QueryResult from "@/app/components/query-result";
-import NewGameButton from "./NewGameButton";
-import Category from "./Category";
-import GBQCell from "./GBQCell";
-import EmptyGBQCell from "./EmptyQBQCell";
+} from '@/__generated__/graphql';
+import { GameBoardQuestion, UpdateGameBoardMappingInput } from '@/__generated__/types';
+import { GameBoardGridDisplay } from './UserGameBoardPageComponent';
+import Title from './Title';
+import Grid from '@mui/material/Grid2';
+import { Paper } from '@mui/material';
+import QueryResult from '@/app/components/query-result';
+import NewGameButton from './NewGameButton';
+import Category from './Category';
+import GBQCell from './GBQCell';
+import EmptyGBQCell from './EmptyQBQCell';
+import { validateGameBoard } from './validateGameBoard';
 import {
   DndContext,
   DragEndEvent,
@@ -27,22 +25,25 @@ import {
   useSensor,
   PointerSensor,
   closestCenter,
-} from "@dnd-kit/core";
+} from '@dnd-kit/core';
+
+type CellKey = `${number},${number}`;
+type GBQMap = Record<CellKey, GameBoardQuestion>;
 
 interface GameBoardGridProps {
-  gameBoard: GameBoard;
+  gameBoard: GameBoardGridDisplay;
   userId: number;
 }
 
+// TODO think about how you want to split the giant gameboard grid into smaller components
+// it seems a bit too unwieldy right now. How do people normally handle complex situations like this?
+
 const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard, userId }) => {
-  // Manage categories as local state
-  const [categories, setCategories] = useState<string[]>(
-    gameBoard.categories as string[]
-  );
+  const [categories, setCategories] = useState<string[]>(gameBoard.categories as string[]);
 
   // Eventually provide support for bigger gameboards
+  const COL_COUNT = (gameBoard.categories?.length ?? 0) || 0;
   const ROW_COUNT = 5;
-  const COL_COUNT = 5;
 
   const { data, loading, error } = useFetchGbQsQuery({
     variables: { gameBoardId: gameBoard.id },
@@ -50,9 +51,7 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard, userId }) => {
   const [updateMapping] = useUpdateMappingMutation();
 
   // Initialize mapping as state
-  const [gameBoardQuestionsMap, setGameBoardQuestionsMap] = useState<
-    Record<string, GameBoardQuestion>
-  >({});
+  const [gameBoardQuestionsMap, setGameBoardQuestionsMap] = useState<GBQMap>({});
 
   useEffect(() => {
     if (data?.fetchGameBoardQuestions) {
@@ -66,24 +65,24 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard, userId }) => {
     }
   }, [data]);
 
+  // TODO pass gameboard properly or change the type validation expects
+  const { isPlayable, blockedReason } = useMemo(
+    () => validateGameBoard(gameBoard, gameBoardQuestionsMap, ROW_COUNT),
+    [gameBoard, gameBoardQuestionsMap],
+  );
+
   // Create Array of GBQs or Placeholder Cells
   const cells: ReactElement[] = [];
   for (let row = 0; row < ROW_COUNT; row++) {
     for (let col = 0; col < COL_COUNT; col++) {
-      const key = `${row},${col}`;
+      const key: CellKey = `${row},${col}`;
       const gameBoardQuestion = gameBoardQuestionsMap[key];
       cells.push(
         gameBoardQuestion ? (
           <GBQCell key={key} gameBoardQuestion={gameBoardQuestion} id={key} />
         ) : (
-          <EmptyGBQCell
-            key={key}
-            row={row}
-            col={col}
-            gameBoardId={gameBoard.id}
-            userId={userId}
-          />
-        )
+          <EmptyGBQCell key={key} row={row} col={col} gameBoardId={gameBoard.id} userId={userId} />
+        ),
       );
     }
   }
@@ -100,34 +99,32 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard, userId }) => {
       activationConstraint: {
         distance: 5, // Minimum distance to start dragging
       },
-    })
+    }),
   );
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (process.env.NODE_ENV !== "production") {
-      console.log("Entered handleDragEnd");
-      console.log("Active ID:", active?.id);
-      console.log("Over ID:", over?.id);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Entered handleDragEnd');
+      console.log('Active ID:', active?.id);
+      console.log('Over ID:', over?.id);
     }
 
+    // No valid drag or drop object
     if (!active || !over) {
       // console.log("Drag ended outside the grid or no valid drop target.");
       return;
     }
 
+    // User has moved question (active) on top of another cell (over)
     if (active.id !== over.id) {
-      const activeKey = active.id; // e.g. "0,1"
-      const overKey = over.id; // e.g. "1,1"
-      // console.log(`Dragged from ${active.id} to ${over.id}`);
-
       // Deconstruct active ID
-      const [activeRow, activeCol] = active.id
-        .toString()
-        .split(",")
-        .map(Number);
-      const [overRow, overCol] = over.id.toString().split(",").map(Number);
+      const [activeRow, activeCol] = active.id.toString().split(',').map(Number);
+      const [overRow, overCol] = over.id.toString().split(',').map(Number);
+
+      const activeKey: CellKey = `${activeRow},${activeCol}`; // e.g. "0,1"
+      const overKey: CellKey = `${overRow},${overCol}`; // e.g. "1,1"
 
       // Retrieve GameBoardQuestion objects if any
       const activeGBQ = gameBoardQuestionsMap[activeKey];
@@ -137,10 +134,10 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard, userId }) => {
       const newMapping = { ...gameBoardQuestionsMap };
 
       if (activeGBQ && overGBQ) {
-        // Swap the two questions
-        // console.log("Swapping questions");
+        // Swap two existing questions
         newMapping[activeKey] = overGBQ;
         newMapping[overKey] = activeGBQ;
+
         // Update GBQ in backend
         const activeGBQInput: UpdateGameBoardMappingInput = {
           boardId: gameBoard.id,
@@ -170,8 +167,7 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard, userId }) => {
           ],
         });
       } else if (activeGBQ && !overGBQ) {
-        // Move active question to the empty cell
-        // console.log("Moving question to empty cell");
+        // Move active question to empty cell
         newMapping[overKey] = activeGBQ;
         delete newMapping[activeKey];
         // Update GBQ in backend
@@ -192,15 +188,12 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard, userId }) => {
           ],
         });
       } else if (!activeGBQ && overGBQ) {
-        // console.log("Can't move empty cell to filled cell");
-        // Optionally handle dragging empty cell to a filled cell
+        // User has dragged empty cell over existing question
         return;
       }
 
-      // Update the gameBoardQuestions mapping
+      // Update the UI with new gameBoardQuestions mapping
       setGameBoardQuestionsMap(newMapping);
-    } else {
-      // console.log("Dragged to the same position, no changes made.");
     }
   };
 
@@ -208,33 +201,34 @@ const GameBoardGrid: React.FC<GameBoardGridProps> = ({ gameBoard, userId }) => {
     <Paper
       sx={{
         padding: 2,
-        width: "100%",
-        height: "100vh",
-        margin: "auto",
+        width: '100%',
+        height: '100vh',
+        margin: 'auto',
       }}
     >
       <Grid
         container
-        alignItems={"stretch"}
+        alignItems={'stretch'}
         sx={{
-          minHeight: "10%",
+          minHeight: '10%',
         }}
       >
         <Title title={gameBoard.title} gameBoardId={gameBoard.id} />
         <NewGameButton
           userId={userId}
-          gameBoard={gameBoard}
-          gameBoardQuestions={gameBoardQuestionsMap}
+          gameBoardId={gameBoard.id}
+          isPlayable={isPlayable}
+          blockedReason={blockedReason}
         />
       </Grid>
-      <DndContext
-        sensors={sensors}
-        onDragEnd={handleDragEnd}
-        collisionDetection={closestCenter}
-      >
+      <DndContext sensors={sensors} onDragEnd={handleDragEnd} collisionDetection={closestCenter}>
         <Grid
           container
-          sx={{ height: "90%", textAlign: "center", alignItems: "stretch" }}
+          sx={{
+            height: '90%',
+            textAlign: 'center',
+            alignItems: 'stretch',
+          }}
         >
           <QueryResult error={error} loading={loading} data={data}>
             {categories.map((category: string, index: number) => (
