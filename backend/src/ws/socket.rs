@@ -160,36 +160,59 @@ async fn handle_client_message(
     room_code: String,
     who: SocketAddr,
 ) {
-    while let Some(Ok(Message::Text(text))) = receiver.next().await {
-        tracing::info!("Received message from {}: {}", who, text);
-
-        match serde_json::from_str::<ServerMessage>(&text) {
-            Ok(server_message) => match server_message.message_type {
-                ServerMessageType::Buzz => {
-                    tracing::info!("Received buzz from {}", who);
-                    let mut games_lock = get_games_lock(&games);
-                    if let Some(game_state) = games_lock.get_mut(&room_code) {
-                        handle_buzz(game_state, who);
+    while let Some(msg) = receiver.next().await {
+        match msg {
+            Ok(Message::Text(text)) => {
+                tracing::info!(%who, len = text.len(), "Received text");
+                match serde_json::from_str::<ServerMessage>(&text) {
+                    Ok(server_message) => match server_message.message_type {
+                        ServerMessageType::Buzz => {
+                            tracing::info!("Received buzz from {}", who);
+                            let mut games_lock = get_games_lock(&games);
+                            if let Some(game_state) = games_lock.get_mut(&room_code) {
+                                handle_buzz(game_state, who);
+                            }
+                        }
+                        ServerMessageType::Reset => {
+                            tracing::info!("Received reset from {}", who);
+                            let mut games_lock = get_games_lock(&games);
+                            if let Some(game_state) = games_lock.get_mut(&room_code) {
+                                // TODO implement reset logic
+                                handle_reset(game_state, who);
+                            }
+                        }
+                        ServerMessageType::Status => {
+                            let mut games_lock = get_games_lock(&games);
+                            if let Some(game_state) = games_lock.get_mut(&room_code) {
+                                // TODO implement status logic
+                                handle_status(game_state, who, &server_message);
+                            }
+                        }
+                    },
+                    Err(e) => {
+                        tracing::warn!("Failed to deserialize ServerMessage from {}: {}", who, e);
                     }
                 }
-                ServerMessageType::Reset => {
-                    tracing::info!("Received reset from {}", who);
-                    let mut games_lock = get_games_lock(&games);
-                    if let Some(game_state) = games_lock.get_mut(&room_code) {
-                        // TODO implement reset logic
-                        handle_reset(game_state, who);
-                    }
-                }
-                ServerMessageType::Status => {
-                    let mut games_lock = get_games_lock(&games);
-                    if let Some(game_state) = games_lock.get_mut(&room_code) {
-                        // TODO implement status logic
-                        handle_status(game_state, who, &server_message);
-                    }
-                }
-            },
+            }
+            Ok(Message::Binary(ref b)) => {
+                /* TODO ignore or handle */
+                tracing::info!(%who, len = b.len(), "Received binary");
+            }
+            Ok(Message::Ping(_p)) => {
+                /* TODO axum auto-pongs; no-op */
+                tracing::trace!(%who, "Received ping");
+            }
+            Ok(Message::Pong(_p)) => {
+                /* TODO keep-alive; no-op */
+                tracing::trace!(%who, "Received pong");
+            }
+            Ok(Message::Close(frame)) => {
+                tracing::warn!(%who, ?frame, "Client closed connection");
+                break;
+            }
             Err(e) => {
-                tracing::warn!("Failed to deserialize ServerMessage from {}: {}", who, e);
+                tracing::error!(%who, error = ?e, "WebSocket error");
+                break;
             }
         }
     }

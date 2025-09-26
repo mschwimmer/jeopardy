@@ -127,6 +127,5 @@ pub async fn ws_handler(
         }
     }
 
-    // TODO figure out why this has an error
     Ok(ws.on_upgrade(move |socket: WebSocket| handle_socket(socket, addr, room_code, games)))
 }
