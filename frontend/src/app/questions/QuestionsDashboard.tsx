@@ -2,12 +2,15 @@
 "use client";
 import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { Box, Typography } from "@mui/material";
-import { Question } from "@/__generated__/types";
 import React from "react";
+import {
+  FetchAllQuestionsQuery,
+  useFetchAllQuestionsQuery,
+} from "@/__generated__/graphql";
 
-interface QuestionsDashboardProps {
-  questions: Question[];
-}
+type QuestionDisplayRow = NonNullable<
+  FetchAllQuestionsQuery["fetchAllQuestions"]
+>[number];
 
 const columns: GridColDef[] = [
   { field: "id", headerName: "ID", width: 70 },
@@ -23,7 +26,12 @@ const columns: GridColDef[] = [
     flex: 1,
     minWidth: 200,
   },
-  { field: "userId", headerName: "User ID", width: 100 },
+  {
+    field: "user",
+    headerName: "Author",
+    minWidth: 150,
+    valueGetter: (_, row) => row?.user.username || "Unknown",
+  },
   {
     field: "createdAt",
     headerName: "Created",
@@ -37,9 +45,20 @@ const columns: GridColDef[] = [
   },
 ];
 
-const QuestionsDashboard: React.FC<QuestionsDashboardProps> = ({
-  questions,
-}) => {
+export default function QuestionsDashboard() {
+  const { data, loading, error } = useFetchAllQuestionsQuery();
+
+  if (loading) return <p>Loading...</p>;
+  if (error) {
+    console.error("Error loading questions:", error);
+    return <p>Error loading questions.</p>;
+  }
+  if (!data || !data.fetchAllQuestions) {
+    return <p>No questions found.</p>;
+  }
+
+  const questions = data.fetchAllQuestions;
+
   return (
     <Box sx={{ width: "100%", mt: 2 }}>
       <Typography variant="h4" gutterBottom>
@@ -49,7 +68,7 @@ const QuestionsDashboard: React.FC<QuestionsDashboardProps> = ({
         If only there was a way to use these questions in my gameboard. Hmm. If
         only..
       </Typography>
-      <DataGrid<Question>
+      <DataGrid<QuestionDisplayRow>
         rows={questions}
         columns={columns}
         pageSizeOptions={[5]}
@@ -65,6 +84,4 @@ const QuestionsDashboard: React.FC<QuestionsDashboardProps> = ({
       />
     </Box>
   );
-};
-
-export default QuestionsDashboard;
+}

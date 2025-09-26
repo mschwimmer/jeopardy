@@ -16,6 +16,9 @@ export const ALL_QUESTIONS_QUERY = gql`
   query fetchAllQuestions {
     fetchAllQuestions {
       ...QuestionFields
+      user {
+        username
+      }
     }
   }
 `;
