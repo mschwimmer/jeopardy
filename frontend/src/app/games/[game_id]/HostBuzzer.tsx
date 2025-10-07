@@ -2,10 +2,10 @@
 // It allows the host to send "buzz" and "reset" signals to the WebSocket server, and displays
 // incoming messages from connected clients for debugging or monitoring purposes.
 
-"use client";
+'use client';
 
-import { useContext, useEffect, useState } from "react";
-import { WebsocketContext } from "./WebSocketContext";
+import { useContext, useEffect, useState } from 'react';
+import { WebsocketContext } from './WebSocketContext';
 
 export const HostBuzzer = ({ room_code }: { room_code: string }) => {
   const context = useContext(WebsocketContext);
@@ -15,9 +15,10 @@ export const HostBuzzer = ({ room_code }: { room_code: string }) => {
   useEffect(() => {
     if (context?.value) {
       try {
-        const messageText = `${context.value.type}: ${JSON.stringify(
-          context.value
-        )}`;
+        // TODO parse JSON messages better here.
+        const messageText = `${context.value.type}: ${JSON.stringify(context.value)}`;
+
+        // append messageText to messages
         setMessages((prev) => [...prev, messageText]);
       } catch (error) {
         setMessages((prev) => [...prev, `Error parsing message: ${error}`]);
@@ -36,7 +37,7 @@ export const HostBuzzer = ({ room_code }: { room_code: string }) => {
     <div>
       <h1>Buzzer Control</h1>
       <p>Room Code: {room_code}</p>
-      <p>Connection Status: {ready ? "Connected" : "Disconnected"}</p>
+      <p>Connection Status: {ready ? 'Connected' : 'Disconnected'}</p>
 
       <button onClick={sendBuzz} disabled={!ready}>
         Buzz
