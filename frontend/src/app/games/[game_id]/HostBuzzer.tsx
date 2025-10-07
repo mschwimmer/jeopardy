@@ -15,11 +15,12 @@ export const HostBuzzer = ({ room_code }: { room_code: string }) => {
   useEffect(() => {
     if (context?.value) {
       try {
-        // TODO parse JSON messages better here.
-        const messageText = `${context.value.type}: ${JSON.stringify(context.value)}`;
+        // const wsContextVal = context.value;
+        // const messageText = `${context.value.type}: ${JSON.stringify(context.value)}`;
+        const statusText = `${context.value.data.status}`;
 
         // append messageText to messages
-        setMessages((prev) => [...prev, messageText]);
+        setMessages((prev) => [...prev, statusText]);
       } catch (error) {
         setMessages((prev) => [...prev, `Error parsing message: ${error}`]);
       }
@@ -33,6 +34,8 @@ export const HostBuzzer = ({ room_code }: { room_code: string }) => {
 
   const { ready, sendBuzz, sendReset } = context;
 
+  // TODO create component that displays the current buzzer, should update state depending on buzzes and resets
+
   return (
     <div>
       <h1>Buzzer Control</h1>
@@ -43,7 +46,10 @@ export const HostBuzzer = ({ room_code }: { room_code: string }) => {
         Buzz
       </button>
       <button onClick={sendReset} disabled={!ready}>
-        Reset
+        Reset Buzzer
+      </button>
+      <button onClick={() => setMessages([])} disabled={!ready}>
+        Clear Messages
       </button>
       <div>
         <h2>Messages</h2>
