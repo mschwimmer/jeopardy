@@ -1,11 +1,13 @@
 mod error;
 mod handler;
+pub mod messages;
 mod socket;
 mod state;
 mod utils;
 mod validators;
 
 pub use handler::ws_handler;
+pub use messages::{make_status_message, ServerData, ServerMessage, ServerMessageType};
 pub use socket::handle_socket;
 pub use state::GameState;
 use std::collections::HashMap;

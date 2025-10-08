@@ -1,47 +1,18 @@
 // src/ws/socket.rs
+/// Main loop and dispatch goes here
+/// TODO: factor out message types and builders into messages.rs
+use crate::ws::messages::{make_status_message, ServerMessage, ServerMessageType};
 use crate::ws::state::{Client, GameState};
 use crate::ws::utils::get_games_lock;
 use crate::ws::Games;
-use chrono::Utc;
 
 use axum::{
     body::Bytes,
     extract::ws::{Message, Utf8Bytes, WebSocket},
 };
 use futures::{SinkExt, StreamExt};
-use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 use tokio::sync::broadcast;
-
-// Creating a type for websocket server json messages
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
-pub enum ServerMessageType {
-    Buzz,
-    Reset,
-    Status,
-}
-
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct ServerData {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub user_id: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub buzz_time: Option<u64>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub status: Option<String>,
-    // You can add other optional fields as needed
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct ServerMessage {
-    #[serde(rename = "type")]
-    pub message_type: ServerMessageType,
-    pub data: ServerData,
-    pub timestamp: u64,
-}
 
 /// Helper function to run broadcast task
 async fn run_broadcast_task(
@@ -59,19 +30,6 @@ async fn run_broadcast_task(
         } else {
             tracing::warn!("Failed to serialize ServerMessage for {}", who);
         }
-    }
-}
-
-/// Helper function to create a status message, possibly worth extracting to a utility module
-fn make_status_message(user_id: &str, text: &str) -> ServerMessage {
-    ServerMessage {
-        message_type: ServerMessageType::Status,
-        data: ServerData {
-            user_id: Some(user_id.to_string()),
-            status: Some(text.to_string()),
-            ..Default::default()
-        },
-        timestamp: Utc::now().timestamp_millis() as u64,
     }
 }
 

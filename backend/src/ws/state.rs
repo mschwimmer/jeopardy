@@ -2,7 +2,7 @@
 
 use crate::{
     models::{game::Game, player::Player},
-    ws::socket::ServerMessage,
+    ws::messages::ServerMessage,
 };
 use diesel_async::AsyncPgConnection;
 use std::{collections::HashMap, net::SocketAddr};
